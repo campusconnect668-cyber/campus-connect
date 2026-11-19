@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Campus Connect - Student Information Hub">
+    <title>Campus Connect | Student Hub</title>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="logo">
+            CAMPUS <span>CONNECT</span>
+        </div>
+
+        <button id="menu-toggle" aria-label="Toggle navigation">
+            ☰
+        </button>
+
+        <nav id="navigation">
+            <a href="#home">Home</a>
+            <a href="#news">Campus News</a>
+            <a href="#academics">Academics</a>
+            <a href="#student-life">Student Life</a>
+            <a href="#contribute">Contribute</a>
+        </nav>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section id="home" class="hero">
+        <h1>Welcome to Campus Connect</h1>
+
+        <p>
+            Your campus, your information, your connection.
+            Stay informed and connected with campus activities.
+        </p>
+
+        <a href="#news" class="btn">Explore Campus News</a>
+    </section>
+
+    <!-- SEARCH SECTION -->
+    <section class="search-section">
+        <h2>Find Campus Information</h2>
+
+        <input
+            type="search"
+            id="search-input"
+            placeholder="Search campus information..."
+        >
+    </section>
+
+    <!-- QUICK ACCESS -->
+    <section id="academics" class="quick-access">
+        <h2>Quick Access</h2>
+
+        <div class="cards">
+            <div class="card">
+                <h3>Academic Updates</h3>
+                <p>Stay informed about academic information.</p>
+            </div>
+
+            <div class="card">
+                <h3>Examinations</h3>
+                <p>Find examination-related updates.</p>
+            </div>
+
+            <div class="card">
+                <h3>Student Resources</h3>
+                <p>Access useful student resources.</p>
+            </div>
+
+            <div class="card">
+                <h3>Campus Events</h3>
+                <p>Discover activities and campus events.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CAMPUS NEWS -->
+    <section id="news" class="news-section">
+        <h2>Latest Campus News</h2>
+
+        <p class="notice">
+            Preview content only. Official announcements
+            must be verified before publication.
+        </p>
+
+        <div class="filters">
+            <button data-category="all">All</button>
+            <button data-category="academic">Academic</button>
+            <button data-category="events">Events</button>
+            <button data-category="general">General</button>
+        </div>
+
+        <div id="news-container">
+
+            <article class="news-card" data-category="academic">
+                <h3>Academic Information</h3>
+                <p>
+                    This section will contain verified academic
+                    announcements and updates.
+                </p>
+            </article>
+
+            <article class="news-card" data-category="events">
+                <h3>Campus Activities</h3>
+                <p>
+                    This section will contain approved campus
+                    activities and event information.
+                </p>
+            </article>
+
+            <article class="news-card" data-category="general">
+                <h3>Student Information</h3>
+                <p>
+                    Important student information will appear here.
+                </p>
+            </article>
+
+        </div>
+    </section>
+
+    <!-- STUDENT LIFE -->
+    <section id="student-life">
+        <h2>Student Life</h2>
+        <p>
+            A place to discover student opportunities,
+            activities, resources and campus experiences.
+        </p>
+    </section>
+
+    <!-- CONTRIBUTION FORM -->
+    <section id="contribute" class="contribute-section">
+        <h2>Contribute to Campus Connect</h2>
+
+        <p>
+            Have useful campus information?
+            Share it with the Campus Connect team.
+        </p>
+
+        <form id="contribution-form">
+
+            <input
+                type="text"
+                id="student-name"
+                placeholder="Your name"
+                required
+            >
+
+            <input
+                type="text"
+                id="contribution-title"
+                placeholder="Contribution title"
+                required
+            >
+
+            <textarea
+                id="contribution-message"
+                placeholder="Write your contribution..."
+                required
+            ></textarea>
+
+            <button type="submit">Submit Contribution</button>
+
+        </form>
+
+        <p id="form-message"></p>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <h3>CAMPUS CONNECT</h3>
+
+        <p>
+            Connecting students with useful campus information.
+        </p>
+
+        <p>
+            Independent student project preview.
+            Not an official university website.
+        </p>
+
+        <p>&copy; 2026 Campus Connect. All rights reserved.</p>
+    </footer>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
