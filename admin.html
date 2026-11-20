@@ -35,31 +35,39 @@ footer{text-align:center;padding:25px;color:#64748b}
 </style>
 </head>
 <body>
+
 <header>
 <h1>CAMPUS CONNECT</h1>
 <p>Administrator Portal</p>
 </header>
 
 <div class="container">
+
 <div class="login-box" id="loginBox">
 <h2>Administrator Login</h2>
 <p>Sign in to access your dashboard.</p>
+
 <form id="loginForm">
 <label for="email">Admin Email</label>
 <input type="email" id="email" value="campusconnect668@gmail.com" required>
+
 <label for="password">Password</label>
 <input type="password" id="password" placeholder="Enter your password" required>
+
 <button type="submit" id="loginButton">Login</button>
 <div class="message" id="message"></div>
 </form>
 </div>
 
 <div class="dashboard" id="dashboard">
+
 <h2>Welcome, Administrator!</h2>
 <p>Manage your Campus Connect platform.</p>
+
 <button class="logout" id="logoutButton">Logout</button>
 
 <div class="cards" id="dashboardCards">
+
 <div class="card">
 <h3>Student Contributions</h3>
 <p>Student-submitted information.</p>
@@ -80,8 +88,12 @@ footer{text-align:center;padding:25px;color:#64748b}
 
 <div class="card">
 <h3>Website Management</h3>
-<p>Campus information and updates.</p>
+<p>Edit homepage content and contact information.</p>
+<button type="button" onclick="window.location.href='website-management.html'">
+Open Website Management
+</button>
 </div>
+
 </div>
 
 <div class="section" id="contributionsSection" style="display:none">
@@ -94,6 +106,7 @@ footer{text-align:center;padding:25px;color:#64748b}
 <div class="section" id="announcementsSection" style="display:none">
 <h2>Create Campus Announcement</h2>
 <button type="button" id="backAnnouncementsButton">Back to Dashboard</button>
+
 <form id="announcementForm">
 <label for="announcementTitle">Announcement Title</label>
 <input id="announcementTitle" type="text" maxlength="200" required>
@@ -109,6 +122,7 @@ footer{text-align:center;padding:25px;color:#64748b}
 
 <label for="announcementContent">Announcement Details</label>
 <textarea id="announcementContent" maxlength="5000" required></textarea>
+
 <button type="submit" id="publishButton">Publish Announcement</button>
 <p id="announcementStatus" class="status"></p>
 </form>
@@ -142,6 +156,7 @@ footer{text-align:center;padding:25px;color:#64748b}
 Your administrator login is connected. Use the dashboard to manage Campus Connect.
 </div>
 </div>
+
 </div>
 </div>
 
@@ -182,6 +197,7 @@ event.preventDefault();
 loginButton.disabled=true;
 loginButton.textContent="Signing in...";
 message.textContent="";
+
 try{
 const response=await fetch(API+"/login",{
 method:"POST",
@@ -192,15 +208,20 @@ email:document.getElementById("email").value,
 password:document.getElementById("password").value
 })
 });
+
 const data=await response.json();
+
 if(!response.ok||!data.ok){
 message.textContent=data.error||"Login failed.";
 return;
 }
+
 await checkSession();
+
 if(dashboard.style.display!=="block"){
 message.textContent="Login accepted, but the session could not be verified. Please try again.";
 }
+
 }catch(error){
 message.textContent="Connection error. Please try again.";
 }finally{
@@ -236,31 +257,43 @@ document.getElementById("viewContributionsButton").addEventListener("click",asyn
 showSection(contributionsSection);
 contributionsList.replaceChildren();
 contributionsStatus.textContent="Loading contributions...";
+
 try{
 const response=await fetch("/api/contributions",{
 credentials:"same-origin",
 headers:{"Accept":"application/json"}
 });
+
 const data=await response.json();
+
 if(!response.ok)throw new Error(data.error||"Unable to load contributions.");
+
 const items=data.contributions||[];
+
 if(items.length===0){
 contributionsStatus.textContent="No student contributions have been submitted yet.";
 return;
 }
+
 contributionsStatus.textContent=items.length+" contribution(s) received.";
+
 items.forEach(function(item){
 const article=document.createElement("div");
 article.className="contribution-item";
+
 const heading=document.createElement("h3");
 heading.textContent=item.student_name||"Student";
+
 const email=document.createElement("p");
 email.textContent=item.email||"No email provided";
+
 const content=document.createElement("p");
 content.textContent=item.message||"";
+
 article.append(heading,email,content);
 contributionsList.appendChild(article);
 });
+
 }catch(error){
 contributionsStatus.textContent=error.message||"Could not load contributions.";
 }
@@ -280,11 +313,14 @@ document.getElementById("backEventsButton").addEventListener("click",backToDashb
 
 document.getElementById("announcementForm").addEventListener("submit",async function(event){
 event.preventDefault();
+
 const publishButton=document.getElementById("publishButton");
 const status=document.getElementById("announcementStatus");
+
 publishButton.disabled=true;
 publishButton.textContent="Publishing...";
 status.textContent="";
+
 try{
 const response=await fetch("/api/announcements",{
 method:"POST",
@@ -296,11 +332,15 @@ content:document.getElementById("announcementContent").value.trim(),
 category:document.getElementById("announcementCategory").value
 })
 });
+
 const data=await response.json();
+
 if(!response.ok)throw new Error(data.error||"Announcement could not be published.");
+
 status.style.color="green";
 status.textContent="Announcement published successfully!";
 document.getElementById("announcementForm").reset();
+
 }catch(error){
 status.style.color="#dc2626";
 status.textContent=error.message||"Publishing failed.";
@@ -356,6 +396,7 @@ document.getElementById("logoutButton").addEventListener("click",async function(
 try{
 await fetch(API+"/logout",{method:"POST",credentials:"same-origin"});
 }catch(error){}
+
 document.getElementById("password").value="";
 message.textContent="";
 showLogin();
