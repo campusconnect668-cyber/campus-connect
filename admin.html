@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Connect | Admin Dashboard</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+header {
+    background: #123b67;
+    color: white;
+    padding: 22px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 24px;
+}
+
+.container {
+    max-width: 950px;
+    margin: 30px auto;
+    padding: 15px;
+}
+
+.welcome {
+    margin-bottom: 25px;
+}
+
+.welcome h2 {
+    margin-bottom: 8px;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px #00000010;
+}
+
+.card h3 {
+    color: #123b67;
+    margin-bottom: 12px;
+}
+
+.card p {
+    color: #64748b;
+}
+
+.section {
+    background: white;
+    margin-top: 25px;
+    padding: 22px;
+    border-radius: 12px;
+}
+
+.section h2 {
+    margin-bottom: 12px;
+}
+
+.notice {
+    background: #fff7ed;
+    border-left: 4px solid #f59e0b;
+    padding: 14px;
+    margin-top: 15px;
+    line-height: 1.5;
+}
+
+button {
+    background: #123b67;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    margin-top: 15px;
+}
+
+footer {
+    text-align: center;
+    padding: 25px;
+    color: #64748b;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>CAMPUS CONNECT</h1>
+    <p>Administrator Dashboard</p>
+</header>
+
+<div class="container">
+
+    <div class="welcome">
+        <h2>Welcome, Administrator!</h2>
+        <p>Manage your Campus Connect student information platform.</p>
+    </div>
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>Student Contributions</h3>
+            <p>Manage student-submitted information.</p>
+        </div>
+
+        <div class="card">
+            <h3>Announcements</h3>
+            <p>Manage campus announcements.</p>
+        </div>
+
+        <div class="card">
+            <h3>Campus Events</h3>
+            <p>Manage upcoming campus activities.</p>
+        </div>
+
+        <div class="card">
+            <h3>Website Management</h3>
+            <p>Manage campus information and updates.</p>
+        </div>
+
+    </div>
+
+    <div class="section">
+        <h2>Administration</h2>
+        <p>Your administration workspace is ready for setup.</p>
+
+        <div class="notice">
+            <strong>Security notice:</strong>
+            Administrative actions are not connected yet.
+            A secure server-side login and protected API
+            permissions must be configured before managing
+            student contributions, announcements or events.
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    <p>Campus Connect Admin Dashboard © 2026</p>
+</footer>
+
+</body>
+</html>
