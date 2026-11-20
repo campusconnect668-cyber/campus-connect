@@ -5,253 +5,126 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campus Connect | Admin Dashboard</title>
-
 <style>
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    background: #f1f5f9;
-    color: #1e293b;
-}
-
-header {
-    background: #123b67;
-    color: white;
-    padding: 22px;
-    text-align: center;
-}
-
-.container {
-    max-width: 950px;
-    margin: 35px auto;
-    padding: 15px;
-}
-
-.login-box, .card, .section {
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 3px 12px #00000010;
-}
-
-.login-box {
-    max-width: 420px;
-    margin: 45px auto;
-}
-
-h2 {
-    color: #123b67;
-    margin-bottom: 15px;
-}
-
-.login-box p {
-    color: #64748b;
-    margin-bottom: 20px;
-}
-
-label {
-    display: block;
-    margin: 15px 0 7px;
-    font-weight: bold;
-}
-
-input {
-    width: 100%;
-    padding: 13px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    font-size: 16px;
-}
-
-button {
-    background: #123b67;
-    color: white;
-    border: none;
-    padding: 13px 20px;
-    border-radius: 6px;
-    margin-top: 18px;
-    width: 100%;
-    font-size: 16px;
-    cursor: pointer;
-}
-
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.logout {
-    background: #dc2626;
-    width: auto;
-}
-
-.message {
-    margin-top: 15px;
-    color: #dc2626;
-    line-height: 1.5;
-}
-
-.dashboard {
-    display: none;
-}
-
-.cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 18px;
-    margin-top: 20px;
-}
-
-.card h3 {
-    color: #123b67;
-    margin-bottom: 10px;
-}
-
-.card p {
-    color: #64748b;
-}
-
-.section {
-    margin-top: 25px;
-}
-
-.notice {
-    background: #fff7ed;
-    border-left: 4px solid #f59e0b;
-    padding: 14px;
-    line-height: 1.5;
-}
-
-.contribution-item {
-    background: #f8fafc;
-    padding: 16px;
-    border-radius: 8px;
-    margin-top: 14px;
-    overflow-wrap: anywhere;
-}
-
-.contribution-item h3 {
-    color: #123b67;
-    margin-bottom: 8px;
-}
-
-.contribution-item p {
-    margin-top: 8px;
-    white-space: pre-wrap;
-}
-
-footer {
-    text-align: center;
-    padding: 25px;
-    color: #64748b;
-}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f1f5f9;color:#1e293b}
+header{background:#123b67;color:white;padding:22px;text-align:center}
+.container{max-width:950px;margin:35px auto;padding:15px}
+.login-box,.card,.section{background:white;padding:25px;border-radius:12px;box-shadow:0 3px 12px #00000010}
+.login-box{max-width:420px;margin:45px auto}
+h2{color:#123b67;margin-bottom:15px}
+.login-box p{color:#64748b;margin-bottom:20px}
+label{display:block;margin:15px 0 7px;font-weight:bold}
+input,textarea,select{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:6px;font-size:16px;font-family:Arial}
+textarea{min-height:130px;resize:vertical}
+button{background:#123b67;color:white;border:0;padding:13px 20px;border-radius:6px;margin-top:18px;width:100%;font-size:16px;cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}
+.logout{background:#dc2626;width:auto}
+.message{margin-top:15px;color:#dc2626;line-height:1.5}
+.dashboard{display:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin-top:20px}
+.card h3{color:#123b67;margin-bottom:10px}
+.card p{color:#64748b}
+.section{margin-top:25px}
+.notice{background:#fff7ed;border-left:4px solid #f59e0b;padding:14px;line-height:1.5}
+.contribution-item{background:#f8fafc;padding:16px;border-radius:8px;margin-top:14px;overflow-wrap:anywhere}
+.contribution-item h3{color:#123b67;margin-bottom:8px}
+.contribution-item p{margin-top:8px;white-space:pre-wrap}
+footer{text-align:center;padding:25px;color:#64748b}
+.status{margin-top:15px;line-height:1.5}
 </style>
 </head>
-
 <body>
-
 <header>
-    <h1>CAMPUS CONNECT</h1>
-    <p>Administrator Portal</p>
+<h1>CAMPUS CONNECT</h1>
+<p>Administrator Portal</p>
 </header>
 
 <div class="container">
-
-    <div class="login-box" id="loginBox">
-        <h2>Administrator Login</h2>
-        <p>Sign in to access your dashboard.</p>
-
-        <form id="loginForm">
-            <label for="email">Admin Email</label>
-            <input
-                type="email"
-                id="email"
-                value="campusconnect668@gmail.com"
-                required
-            >
-
-            <label for="password">Password</label>
-            <input
-                type="password"
-                id="password"
-                placeholder="Enter your password"
-                required
-            >
-
-            <button type="submit" id="loginButton">
-                Login
-            </button>
-
-            <div class="message" id="message"></div>
-        </form>
-    </div>
-
-    <div class="dashboard" id="dashboard">
-        <h2>Welcome, Administrator!</h2>
-        <p>Manage your Campus Connect platform.</p>
-
-        <button class="logout" id="logoutButton">Logout</button>
-
-        <div class="cards" id="dashboardCards">
-
-            <div class="card">
-                <h3>Student Contributions</h3>
-                <p>Student-submitted information.</p>
-                <button type="button" id="viewContributionsButton">
-                    View Contributions
-                </button>
-            </div>
-
-            <div class="card">
-                <h3>Announcements</h3>
-                <p>Campus announcements.</p>
-            </div>
-
-            <div class="card">
-                <h3>Campus Events</h3>
-                <p>Upcoming campus activities.</p>
-            </div>
-
-            <div class="card">
-                <h3>Website Management</h3>
-                <p>Campus information and updates.</p>
-            </div>
-
-        </div>
-
-        <div class="section" id="contributionsSection" style="display:none;">
-            <h2>Student Contributions</h2>
-
-            <button type="button" id="backButton">
-                Back to Dashboard
-            </button>
-
-            <p id="contributionsStatus" style="margin-top:15px;">
-                Contributions will appear here.
-            </p>
-
-            <div id="contributionsList"></div>
-        </div>
-
-        <div class="section" id="adminNotice">
-            <h2>Administration</h2>
-            <div class="notice">
-                Your administrator login is connected.
-                More management functions will be added.
-            </div>
-        </div>
-    </div>
-
+<div class="login-box" id="loginBox">
+<h2>Administrator Login</h2>
+<p>Sign in to access your dashboard.</p>
+<form id="loginForm">
+<label for="email">Admin Email</label>
+<input type="email" id="email" value="campusconnect668@gmail.com" required>
+<label for="password">Password</label>
+<input type="password" id="password" placeholder="Enter your password" required>
+<button type="submit" id="loginButton">Login</button>
+<div class="message" id="message"></div>
+</form>
 </div>
 
-<footer>
-    Campus Connect Admin Dashboard © 2026
-</footer>
+<div class="dashboard" id="dashboard">
+<h2>Welcome, Administrator!</h2>
+<p>Manage your Campus Connect platform.</p>
+<button class="logout" id="logoutButton">Logout</button>
+
+<div class="cards" id="dashboardCards">
+<div class="card">
+<h3>Student Contributions</h3>
+<p>Student-submitted information.</p>
+<button type="button" id="viewContributionsButton">View Contributions</button>
+</div>
+
+<div class="card">
+<h3>Announcements</h3>
+<p>Create and publish campus announcements.</p>
+<button type="button" id="openAnnouncementsButton">Manage Announcements</button>
+</div>
+
+<div class="card">
+<h3>Campus Events</h3>
+<p>Upcoming campus activities.</p>
+</div>
+
+<div class="card">
+<h3>Website Management</h3>
+<p>Campus information and updates.</p>
+</div>
+</div>
+
+<div class="section" id="contributionsSection" style="display:none">
+<h2>Student Contributions</h2>
+<button type="button" id="backContributionsButton">Back to Dashboard</button>
+<p id="contributionsStatus" class="status">Contributions will appear here.</p>
+<div id="contributionsList"></div>
+</div>
+
+<div class="section" id="announcementsSection" style="display:none">
+<h2>Create Campus Announcement</h2>
+<button type="button" id="backAnnouncementsButton">Back to Dashboard</button>
+
+<form id="announcementForm">
+<label for="announcementTitle">Announcement Title</label>
+<input id="announcementTitle" type="text" maxlength="200" required>
+
+<label for="announcementCategory">Category</label>
+<select id="announcementCategory">
+<option value="General">General</option>
+<option value="Academic">Academic</option>
+<option value="Students">Students</option>
+<option value="Important">Important</option>
+<option value="Events">Events</option>
+</select>
+
+<label for="announcementContent">Announcement Details</label>
+<textarea id="announcementContent" maxlength="5000" required></textarea>
+
+<button type="submit" id="publishButton">Publish Announcement</button>
+<p id="announcementStatus" class="status"></p>
+</form>
+</div>
+
+<div class="section" id="adminNotice">
+<h2>Administration</h2>
+<div class="notice">
+Your administrator login is connected. Use the dashboard to manage Campus Connect.
+</div>
+</div>
+</div>
+</div>
+
+<footer>Campus Connect Admin Dashboard © 2026</footer>
 
 <script>
 const API = "/api/admin";
@@ -261,167 +134,173 @@ const dashboard = document.getElementById("dashboard");
 const message = document.getElementById("message");
 const loginButton = document.getElementById("loginButton");
 
-function showDashboard() {
-    loginBox.style.display = "none";
-    dashboard.style.display = "block";
+function showDashboard(){
+loginBox.style.display="none";
+dashboard.style.display="block";
 }
 
-function showLogin() {
-    dashboard.style.display = "none";
-    loginBox.style.display = "block";
+function showLogin(){
+dashboard.style.display="none";
+loginBox.style.display="block";
 }
 
-async function checkSession() {
-    try {
-        const response = await fetch(API + "/session", {
-            credentials: "same-origin"
-        });
-
-        const data = await response.json();
-
-        if (data.authenticated) {
-            showDashboard();
-        } else {
-            showLogin();
-        }
-    } catch (error) {
-        showLogin();
-        message.textContent = "Could not connect. Please try again.";
-    }
+async function checkSession(){
+try{
+const response=await fetch(API+"/session",{credentials:"same-origin"});
+const data=await response.json();
+if(data.authenticated)showDashboard();
+else showLogin();
+}catch(error){
+showLogin();
+message.textContent="Could not connect. Please try again.";
+}
 }
 
-document.getElementById("loginForm").addEventListener("submit", async function(event) {
-    event.preventDefault();
-
-    loginButton.disabled = true;
-    loginButton.textContent = "Signing in...";
-    message.textContent = "";
-
-    try {
-        const response = await fetch(API + "/login", {
-            method: "POST",
-            credentials: "same-origin",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                email: document.getElementById("email").value,
-                password: document.getElementById("password").value
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.ok) {
-            message.textContent = data.error || "Login failed.";
-            return;
-        }
-
-        await checkSession();
-
-        if (dashboard.style.display !== "block") {
-            message.textContent =
-                "Login accepted, but the session could not be verified. Please try again.";
-        }
-
-    } catch (error) {
-        message.textContent = "Connection error. Please try again.";
-    } finally {
-        loginButton.disabled = false;
-        loginButton.textContent = "Login";
-    }
+document.getElementById("loginForm").addEventListener("submit",async function(event){
+event.preventDefault();
+loginButton.disabled=true;
+loginButton.textContent="Signing in...";
+message.textContent="";
+try{
+const response=await fetch(API+"/login",{
+method:"POST",
+credentials:"same-origin",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+email:document.getElementById("email").value,
+password:document.getElementById("password").value
+})
+});
+const data=await response.json();
+if(!response.ok||!data.ok){
+message.textContent=data.error||"Login failed.";
+return;
+}
+await checkSession();
+if(dashboard.style.display!=="block"){
+message.textContent="Login accepted, but the session could not be verified. Please try again.";
+}
+}catch(error){
+message.textContent="Connection error. Please try again.";
+}finally{
+loginButton.disabled=false;
+loginButton.textContent="Login";
+}
 });
 
-const contributionsSection =
-    document.getElementById("contributionsSection");
+const contributionsSection=document.getElementById("contributionsSection");
+const contributionsList=document.getElementById("contributionsList");
+const contributionsStatus=document.getElementById("contributionsStatus");
+const announcementsSection=document.getElementById("announcementsSection");
 
-const contributionsList =
-    document.getElementById("contributionsList");
+function showSection(section){
+document.getElementById("dashboardCards").style.display="none";
+document.getElementById("adminNotice").style.display="none";
+contributionsSection.style.display="none";
+announcementsSection.style.display="none";
+section.style.display="block";
+}
 
-const contributionsStatus =
-    document.getElementById("contributionsStatus");
+function backToDashboard(){
+contributionsSection.style.display="none";
+announcementsSection.style.display="none";
+document.getElementById("dashboardCards").style.display="grid";
+document.getElementById("adminNotice").style.display="block";
+}
 
-document.getElementById("viewContributionsButton")
-.addEventListener("click", async function() {
-
-    document.getElementById("dashboardCards").style.display = "none";
-    document.getElementById("adminNotice").style.display = "none";
-    contributionsSection.style.display = "block";
-
-    contributionsList.replaceChildren();
-    contributionsStatus.textContent = "Loading contributions...";
-
-    try {
-        const response = await fetch("/api/contributions", {
-            credentials: "same-origin",
-            headers: {
-                "Accept": "application/json"
-            }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || "Unable to load contributions.");
-        }
-
-        const items = data.contributions || [];
-
-        if (items.length === 0) {
-            contributionsStatus.textContent =
-                "No student contributions have been submitted yet.";
-            return;
-        }
-
-        contributionsStatus.textContent =
-            items.length + " contribution(s) received.";
-
-        items.forEach(function(item) {
-            const article = document.createElement("div");
-            article.className = "contribution-item";
-
-            const heading = document.createElement("h3");
-            heading.textContent = item.student_name || "Student";
-
-            const email = document.createElement("p");
-            email.textContent = item.email || "No email provided";
-
-            const content = document.createElement("p");
-            content.textContent = item.message || "";
-
-            article.append(heading, email, content);
-            contributionsList.appendChild(article);
-        });
-
-    } catch (error) {
-        contributionsStatus.textContent =
-            error.message || "Could not load contributions.";
-    }
+document.getElementById("viewContributionsButton").addEventListener("click",async function(){
+showSection(contributionsSection);
+contributionsList.replaceChildren();
+contributionsStatus.textContent="Loading contributions...";
+try{
+const response=await fetch("/api/contributions",{
+credentials:"same-origin",
+headers:{"Accept":"application/json"}
+});
+const data=await response.json();
+if(!response.ok)throw new Error(data.error||"Unable to load contributions.");
+const items=data.contributions||[];
+if(items.length===0){
+contributionsStatus.textContent="No student contributions have been submitted yet.";
+return;
+}
+contributionsStatus.textContent=items.length+" contribution(s) received.";
+items.forEach(function(item){
+const article=document.createElement("div");
+article.className="contribution-item";
+const heading=document.createElement("h3");
+heading.textContent=item.student_name||"Student";
+const email=document.createElement("p");
+email.textContent=item.email||"No email provided";
+const content=document.createElement("p");
+content.textContent=item.message||"";
+article.append(heading,email,content);
+contributionsList.appendChild(article);
+});
+}catch(error){
+contributionsStatus.textContent=error.message||"Could not load contributions.";
+}
 });
 
-document.getElementById("backButton").addEventListener("click", function() {
-    contributionsSection.style.display = "none";
-    document.getElementById("dashboardCards").style.display = "grid";
-    document.getElementById("adminNotice").style.display = "block";
+document.getElementById("openAnnouncementsButton").addEventListener("click",function(){
+showSection(announcementsSection);
 });
 
-document.getElementById("logoutButton").addEventListener("click", async function() {
-    try {
-        await fetch(API + "/logout", {
-            method: "POST",
-            credentials: "same-origin"
-        });
-    } catch (error) {
-        // Return to login screen.
-    }
+document.getElementById("backContributionsButton").addEventListener("click",backToDashboard);
+document.getElementById("backAnnouncementsButton").addEventListener("click",backToDashboard);
 
-    document.getElementById("password").value = "";
-    message.textContent = "";
-    showLogin();
+document.getElementById("announcementForm").addEventListener("submit",async function(event){
+event.preventDefault();
+
+const publishButton=document.getElementById("publishButton");
+const status=document.getElementById("announcementStatus");
+
+publishButton.disabled=true;
+publishButton.textContent="Publishing...";
+status.textContent="";
+
+try{
+const response=await fetch("/api/announcements",{
+method:"POST",
+credentials:"same-origin",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+title:document.getElementById("announcementTitle").value.trim(),
+content:document.getElementById("announcementContent").value.trim(),
+category:document.getElementById("announcementCategory").value
+})
+});
+
+const data=await response.json();
+
+if(!response.ok){
+throw new Error(data.error||"Announcement could not be published.");
+}
+
+status.style.color="green";
+status.textContent="Announcement published successfully!";
+
+document.getElementById("announcementForm").reset();
+
+}catch(error){
+status.style.color="#dc2626";
+status.textContent=error.message||"Publishing failed. Please try again.";
+}finally{
+publishButton.disabled=false;
+publishButton.textContent="Publish Announcement";
+}
+});
+
+document.getElementById("logoutButton").addEventListener("click",async function(){
+try{
+await fetch(API+"/logout",{method:"POST",credentials:"same-origin"});
+}catch(error){}
+document.getElementById("password").value="";
+message.textContent="";
+showLogin();
 });
 
 checkSession();
 </script>
-
 </body>
 </html>
