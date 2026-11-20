@@ -7,16 +7,21 @@
 <title>Campus Connect | Website Management</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;padding:20px;font-family:Arial,sans-serif;background:#f1f5f9;color:#1e293b}
+body{margin:0;padding:16px;font-family:Arial,sans-serif;background:#f1f5f9;color:#1e293b}
 main{max-width:750px;margin:25px auto}
-.card{background:white;padding:22px;border-radius:12px;box-shadow:0 3px 12px #0001}
+.card{background:white;padding:22px;border-radius:12px;box-shadow:0 3px 12px #0001;margin-bottom:22px}
 h1,h2{color:#123b67}
 label{display:block;font-weight:bold;margin:18px 0 7px}
-input,textarea{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:6px;font-size:16px;font-family:Arial}
+input,textarea,select{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:6px;font-size:16px;font-family:Arial}
 textarea{min-height:100px}
-button{background:#123b67;color:white;border:0;padding:14px;border-radius:7px;font-size:16px;width:100%;margin-top:20px}
+button{background:#123b67;color:white;border:0;padding:14px;border-radius:7px;font-size:16px;width:100%;margin-top:18px}
+button:disabled{opacity:.6}
 .back{display:block;margin-bottom:20px;color:#123b67}
-#status{margin-top:15px;line-height:1.5}
+.status{margin-top:15px;line-height:1.5;overflow-wrap:anywhere}
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-top:20px}
+.image-card{background:#f8fafc;padding:10px;border-radius:8px;overflow-wrap:anywhere}
+.image-card img{width:100%;height:130px;object-fit:cover;border-radius:6px}
+.image-card p{font-size:13px;margin-top:8px}
 </style>
 </head>
 <body>
@@ -28,7 +33,6 @@ button{background:#123b67;color:white;border:0;padding:14px;border-radius:7px;fo
 <p>Edit the information displayed on your Campus Connect homepage.</p>
 
 <form id="settingsForm">
-
 <label for="hero_title">Homepage Welcome Heading</label>
 <input id="hero_title" maxlength="200" required>
 
@@ -48,14 +52,47 @@ button{background:#123b67;color:white;border:0;padding:14px;border-radius:7px;fo
 <input id="contact_email" type="email" maxlength="254" required>
 
 <button type="submit" id="saveButton">Save Website Changes</button>
-<p id="status"></p>
+<p id="settingsStatus" class="status"></p>
 </form>
 </div>
+
+<div class="card">
+<h2>Upload Website Images</h2>
+<p>Choose an image from your phone gallery.</p>
+
+<form id="imageForm">
+<label for="imageName">Image Name</label>
+<input id="imageName" type="text" maxlength="150" placeholder="Example: Campus Banner" required>
+
+<label for="imageType">Image Category</label>
+<select id="imageType" required>
+<option value="banner">Homepage Banner</option>
+<option value="student-life">Student Life</option>
+<option value="general">General Campus Image</option>
+</select>
+
+<label for="imageFile">Choose Picture</label>
+<input id="imageFile" type="file" accept="image/jpeg,image/png,image/webp" required>
+
+<button type="submit" id="uploadButton">Upload Image</button>
+<p id="uploadStatus" class="status"></p>
+</form>
+</div>
+
+<div class="card">
+<h2>Uploaded Images</h2>
+<button type="button" id="refreshImages">Refresh Images</button>
+<div id="imageGallery" class="gallery"></div>
+<p id="galleryStatus" class="status"></p>
+</div>
+
 </main>
 
 <script>
-const API = "/api/website-settings";
-const fields = [
+const SETTINGS_API="/api/website-settings";
+const IMAGES_API="/api/website-images";
+
+const fields=[
 "hero_title",
 "hero_description",
 "hero_button",
@@ -64,87 +101,207 @@ const fields = [
 "contact_email"
 ];
 
-async function loadSettings() {
-const status = document.getElementById("status");
+async function loadSettings(){
+const status=document.getElementById("settingsStatus");
 
-try {
-const sessionResponse = await fetch("/api/admin/session", {
-credentials: "same-origin",
-cache: "no-store"
+try{
+const sessionResponse=await fetch("/api/admin/session",{
+credentials:"same-origin",
+cache:"no-store"
 });
 
-const session = await sessionResponse.json();
+const session=await sessionResponse.json();
 
-if (!session.authenticated) {
-window.location.href = "admin.html";
+if(!session.authenticated){
+window.location.href="admin.html";
 return;
 }
 
-const response = await fetch(API, {
-credentials: "same-origin",
-cache: "no-store"
+const response=await fetch(SETTINGS_API,{cache:"no-store"});
+if(!response.ok)throw new Error("Could not load website settings.");
+
+const data=await response.json();
+
+fields.forEach(field=>{
+document.getElementById(field).value=data[field]||"";
 });
 
-if (!response.ok) throw new Error("Could not load website settings.");
+status.style.color="green";
+status.textContent="Website settings loaded.";
 
-const data = await response.json();
-
-fields.forEach(field => {
-document.getElementById(field).value = data[field] || "";
-});
-
-status.textContent = "Website settings loaded.";
-status.style.color = "green";
-
-} catch (error) {
-status.textContent = error.message || "Unable to load settings.";
-status.style.color = "#dc2626";
+}catch(error){
+status.style.color="#dc2626";
+status.textContent=error.message||"Unable to load settings.";
 }
 }
 
-document.getElementById("settingsForm").addEventListener("submit", async event => {
+document.getElementById("settingsForm").addEventListener("submit",async event=>{
 event.preventDefault();
 
-const button = document.getElementById("saveButton");
-const status = document.getElementById("status");
+const button=document.getElementById("saveButton");
+const status=document.getElementById("settingsStatus");
 
-button.disabled = true;
-button.textContent = "Saving...";
-status.textContent = "";
+button.disabled=true;
+button.textContent="Saving...";
 
-const settings = {};
-
-fields.forEach(field => {
-settings[field] = document.getElementById(field).value.trim();
+const settings={};
+fields.forEach(field=>{
+settings[field]=document.getElementById(field).value.trim();
 });
 
-try {
-const response = await fetch(API, {
-method: "PUT",
-credentials: "same-origin",
-headers: {"Content-Type": "application/json"},
-body: JSON.stringify(settings)
+try{
+const response=await fetch(SETTINGS_API,{
+method:"PUT",
+credentials:"same-origin",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify(settings)
 });
 
-const result = await response.json();
+const result=await response.json();
+if(!response.ok)throw new Error(result.error||"Could not save changes.");
 
-if (!response.ok) {
-throw new Error(result.error || "Could not save changes.");
-}
+status.style.color="green";
+status.textContent="Website settings saved successfully!";
 
-status.textContent = "Website settings saved successfully!";
-status.style.color = "green";
-
-} catch (error) {
-status.textContent = error.message || "Saving failed.";
-status.style.color = "#dc2626";
-} finally {
-button.disabled = false;
-button.textContent = "Save Website Changes";
+}catch(error){
+status.style.color="#dc2626";
+status.textContent=error.message||"Saving failed.";
+}finally{
+button.disabled=false;
+button.textContent="Save Website Changes";
 }
 });
+
+document.getElementById("imageForm").addEventListener("submit",async event=>{
+event.preventDefault();
+
+const button=document.getElementById("uploadButton");
+const status=document.getElementById("uploadStatus");
+const file=document.getElementById("imageFile").files[0];
+const imageName=document.getElementById("imageName").value.trim();
+const imageType=document.getElementById("imageType").value;
+
+if(!file){
+status.textContent="Please choose a picture.";
+return;
+}
+
+if(!["image/jpeg","image/png","image/webp"].includes(file.type)){
+status.textContent="Choose a JPG, PNG or WEBP image.";
+return;
+}
+
+if(file.size>5*1024*1024){
+status.textContent="Please choose an image smaller than 5 MB.";
+return;
+}
+
+button.disabled=true;
+button.textContent="Uploading...";
+status.style.color="#123b67";
+status.textContent="Uploading your picture. Please wait...";
+
+try{
+const formData=new FormData();
+formData.append("file",file);
+formData.append("upload_preset","campus_connect_upload");
+
+const cloudResponse=await fetch(
+"https://api.cloudinary.com/v1_1/jnczthwu/image/upload",
+{
+method:"POST",
+body:formData
+}
+);
+
+const cloudData=await cloudResponse.json();
+
+if(!cloudResponse.ok){
+throw new Error(cloudData.error?.message||"Image upload failed.");
+}
+
+const saveResponse=await fetch(IMAGES_API,{
+method:"POST",
+credentials:"same-origin",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+image_name:imageName,
+image_url:cloudData.secure_url,
+image_type:imageType
+})
+});
+
+const saveData=await saveResponse.json();
+
+if(!saveResponse.ok){
+throw new Error(saveData.error||"Image uploaded but could not be saved to the website database.");
+}
+
+status.style.color="green";
+status.textContent="Image uploaded and saved successfully!";
+
+document.getElementById("imageForm").reset();
+loadImages();
+
+}catch(error){
+status.style.color="#dc2626";
+status.textContent=error.message||"Upload failed. Please try again.";
+}finally{
+button.disabled=false;
+button.textContent="Upload Image";
+}
+});
+
+async function loadImages(){
+const gallery=document.getElementById("imageGallery");
+const status=document.getElementById("galleryStatus");
+
+gallery.replaceChildren();
+status.textContent="Loading images...";
+
+try{
+const response=await fetch(IMAGES_API,{cache:"no-store"});
+const data=await response.json();
+
+if(!response.ok)throw new Error(data.error||"Unable to load images.");
+
+const images=data.images||[];
+
+if(images.length===0){
+status.textContent="No images uploaded yet.";
+return;
+}
+
+status.textContent=images.length+" image(s) uploaded.";
+
+images.forEach(item=>{
+const card=document.createElement("div");
+card.className="image-card";
+
+const img=document.createElement("img");
+img.src=item.image_url;
+img.alt=item.image_name||"Campus image";
+img.loading="lazy";
+
+const name=document.createElement("p");
+name.textContent=item.image_name;
+
+const category=document.createElement("p");
+category.textContent="Category: "+item.image_type;
+
+card.append(img,name,category);
+gallery.appendChild(card);
+});
+
+}catch(error){
+status.textContent=error.message||"Unable to load images.";
+}
+}
+
+document.getElementById("refreshImages").addEventListener("click",loadImages);
 
 loadSettings();
+loadImages();
 </script>
 </body>
 </html>
