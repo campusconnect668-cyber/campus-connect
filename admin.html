@@ -74,7 +74,8 @@ footer{text-align:center;padding:25px;color:#64748b}
 
 <div class="card">
 <h3>Campus Events</h3>
-<p>Upcoming campus activities.</p>
+<p>Create and publish upcoming campus events.</p>
+<button type="button" id="openEventsButton">Manage Events</button>
 </div>
 
 <div class="card">
@@ -93,7 +94,6 @@ footer{text-align:center;padding:25px;color:#64748b}
 <div class="section" id="announcementsSection" style="display:none">
 <h2>Create Campus Announcement</h2>
 <button type="button" id="backAnnouncementsButton">Back to Dashboard</button>
-
 <form id="announcementForm">
 <label for="announcementTitle">Announcement Title</label>
 <input id="announcementTitle" type="text" maxlength="200" required>
@@ -109,9 +109,30 @@ footer{text-align:center;padding:25px;color:#64748b}
 
 <label for="announcementContent">Announcement Details</label>
 <textarea id="announcementContent" maxlength="5000" required></textarea>
-
 <button type="submit" id="publishButton">Publish Announcement</button>
 <p id="announcementStatus" class="status"></p>
+</form>
+</div>
+
+<div class="section" id="eventsSection" style="display:none">
+<h2>Create Campus Event</h2>
+<button type="button" id="backEventsButton">Back to Dashboard</button>
+
+<form id="eventForm">
+<label for="eventTitle">Event Title</label>
+<input id="eventTitle" type="text" maxlength="200" required>
+
+<label for="eventDescription">Event Description</label>
+<textarea id="eventDescription" maxlength="5000" required></textarea>
+
+<label for="eventDate">Event Date</label>
+<input id="eventDate" type="date" required>
+
+<label for="eventLocation">Event Location</label>
+<input id="eventLocation" type="text" maxlength="250" required>
+
+<button type="submit" id="publishEventButton">Publish Event</button>
+<p id="eventStatus" class="status"></p>
 </form>
 </div>
 
@@ -127,12 +148,12 @@ Your administrator login is connected. Use the dashboard to manage Campus Connec
 <footer>Campus Connect Admin Dashboard © 2026</footer>
 
 <script>
-const API = "/api/admin";
+const API="/api/admin";
 
-const loginBox = document.getElementById("loginBox");
-const dashboard = document.getElementById("dashboard");
-const message = document.getElementById("message");
-const loginButton = document.getElementById("loginButton");
+const loginBox=document.getElementById("loginBox");
+const dashboard=document.getElementById("dashboard");
+const message=document.getElementById("message");
+const loginButton=document.getElementById("loginButton");
 
 function showDashboard(){
 loginBox.style.display="none";
@@ -192,18 +213,21 @@ const contributionsSection=document.getElementById("contributionsSection");
 const contributionsList=document.getElementById("contributionsList");
 const contributionsStatus=document.getElementById("contributionsStatus");
 const announcementsSection=document.getElementById("announcementsSection");
+const eventsSection=document.getElementById("eventsSection");
 
 function showSection(section){
 document.getElementById("dashboardCards").style.display="none";
 document.getElementById("adminNotice").style.display="none";
 contributionsSection.style.display="none";
 announcementsSection.style.display="none";
+eventsSection.style.display="none";
 section.style.display="block";
 }
 
 function backToDashboard(){
 contributionsSection.style.display="none";
 announcementsSection.style.display="none";
+eventsSection.style.display="none";
 document.getElementById("dashboardCards").style.display="grid";
 document.getElementById("adminNotice").style.display="block";
 }
@@ -246,19 +270,21 @@ document.getElementById("openAnnouncementsButton").addEventListener("click",func
 showSection(announcementsSection);
 });
 
+document.getElementById("openEventsButton").addEventListener("click",function(){
+showSection(eventsSection);
+});
+
 document.getElementById("backContributionsButton").addEventListener("click",backToDashboard);
 document.getElementById("backAnnouncementsButton").addEventListener("click",backToDashboard);
+document.getElementById("backEventsButton").addEventListener("click",backToDashboard);
 
 document.getElementById("announcementForm").addEventListener("submit",async function(event){
 event.preventDefault();
-
 const publishButton=document.getElementById("publishButton");
 const status=document.getElementById("announcementStatus");
-
 publishButton.disabled=true;
 publishButton.textContent="Publishing...";
 status.textContent="";
-
 try{
 const response=await fetch("/api/announcements",{
 method:"POST",
@@ -270,24 +296,59 @@ content:document.getElementById("announcementContent").value.trim(),
 category:document.getElementById("announcementCategory").value
 })
 });
+const data=await response.json();
+if(!response.ok)throw new Error(data.error||"Announcement could not be published.");
+status.style.color="green";
+status.textContent="Announcement published successfully!";
+document.getElementById("announcementForm").reset();
+}catch(error){
+status.style.color="#dc2626";
+status.textContent=error.message||"Publishing failed.";
+}finally{
+publishButton.disabled=false;
+publishButton.textContent="Publish Announcement";
+}
+});
+
+document.getElementById("eventForm").addEventListener("submit",async function(event){
+event.preventDefault();
+
+const button=document.getElementById("publishEventButton");
+const status=document.getElementById("eventStatus");
+
+button.disabled=true;
+button.textContent="Publishing...";
+status.textContent="";
+
+try{
+const response=await fetch("/api/events",{
+method:"POST",
+credentials:"same-origin",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+title:document.getElementById("eventTitle").value.trim(),
+description:document.getElementById("eventDescription").value.trim(),
+event_date:document.getElementById("eventDate").value,
+location:document.getElementById("eventLocation").value.trim()
+})
+});
 
 const data=await response.json();
 
 if(!response.ok){
-throw new Error(data.error||"Announcement could not be published.");
+throw new Error(data.error||"Event could not be published.");
 }
 
 status.style.color="green";
-status.textContent="Announcement published successfully!";
-
-document.getElementById("announcementForm").reset();
+status.textContent="Event published successfully!";
+document.getElementById("eventForm").reset();
 
 }catch(error){
 status.style.color="#dc2626";
-status.textContent=error.message||"Publishing failed. Please try again.";
+status.textContent=error.message||"Publishing failed.";
 }finally{
-publishButton.disabled=false;
-publishButton.textContent="Publish Announcement";
+button.disabled=false;
+button.textContent="Publish Event";
 }
 });
 
