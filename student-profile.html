@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Connect | Student Profile</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:#f1f5f9;font-family:Arial,sans-serif;color:#1e293b}
+.container{max-width:500px;margin:40px auto;background:white;padding:25px;border-radius:12px;box-shadow:0 4px 15px #0001}
+h1{color:#123b67;text-align:center}
+label{display:block;margin:18px 0 7px;font-weight:bold}
+input{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:7px;font-size:16px}
+button{width:100%;padding:14px;margin-top:20px;background:#123b67;color:white;border:0;border-radius:7px;font-size:16px;cursor:pointer}
+#message{text-align:center;margin-top:15px}
+a{display:block;text-align:center;margin-top:20px;color:#123b67}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Student Profile</h1>
+
+<form id="profileForm">
+<label>Full Name</label>
+<input id="fullName" required maxlength="150">
+
+<label>Email Address</label>
+<input id="email" type="email" disabled>
+
+<label>Phone Number</label>
+<input id="phone" type="tel" maxlength="30">
+
+<button type="submit">Save Profile</button>
+</form>
+
+<div id="message" role="status"></div>
+<a href="student-dashboard.html">Back to Dashboard</a>
+</div>
+
+<script>
+const message = document.getElementById("message");
+const form = document.getElementById("profileForm");
+
+async function loadProfile() {
+  try {
+    const response = await fetch("/api/profile", {
+      credentials: "same-origin",
+      cache: "no-store"
+    });
+
+    if (response.status === 401) {
+      window.location.href = "student.html";
+      return;
+    }
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+
+    document.getElementById("fullName").value = data.student.full_name;
+    document.getElementById("email").value = data.student.email;
+    document.getElementById("phone").value =
+      data.student.phone_number || "";
+
+  } catch (error) {
+    message.textContent = error.message || "Unable to load profile.";
+  }
+}
+
+form.addEventListener("submit", async event => {
+  event.preventDefault();
+  message.textContent = "Saving profile...";
+
+  try {
+    const response = await fetch("/api/profile", {
+      method: "PUT",
+      credentials: "same-origin",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        full_name: document.getElementById("fullName").value,
+        phone_number: document.getElementById("phone").value
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+
+    message.style.color = "green";
+    message.textContent = data.message;
+
+  } catch (error) {
+    message.style.color = "red";
+    message.textContent = error.message;
+  }
+});
+
+loadProfile();
+</script>
+</body>
+</html>
