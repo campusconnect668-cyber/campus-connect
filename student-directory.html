@@ -1,0 +1,165 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Connect | Student Directory</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f1f5f9;
+  color:#1e293b;
+}
+header{
+  background:#123b67;
+  color:white;
+  padding:22px;
+  text-align:center;
+}
+header h1{margin:0}
+header a{color:white}
+main{
+  max-width:850px;
+  margin:25px auto;
+  padding:15px;
+}
+.card{
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  margin-bottom:20px;
+  box-shadow:0 3px 12px #0001;
+}
+h2{color:#123b67}
+input{
+  width:100%;
+  padding:13px;
+  border:1px solid #cbd5e1;
+  border-radius:7px;
+  font-size:16px;
+}
+.student{
+  padding:16px;
+  border-bottom:1px solid #e2e8f0;
+}
+.student:last-child{border-bottom:0}
+.student strong{
+  display:block;
+  color:#123b67;
+  font-size:17px;
+}
+.student small{color:#64748b}
+#message{
+  padding:12px;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Campus Connect</h1>
+<p>Student Directory</p>
+<a href="student-dashboard.html">Back to Student Dashboard</a>
+</header>
+
+<main>
+
+<section class="card">
+<h2>Find Students</h2>
+<p>Search for fellow Campus Connect students.</p>
+
+<input
+  type="search"
+  id="search"
+  placeholder="Search student by name..."
+  autocomplete="off"
+>
+</section>
+
+<section class="card">
+<h2>Registered Students</h2>
+<div id="message">Loading students...</div>
+<div id="studentList"></div>
+</section>
+
+</main>
+
+<script>
+let allStudents = [];
+
+const studentList = document.getElementById("studentList");
+const message = document.getElementById("message");
+const search = document.getElementById("search");
+
+function displayStudents(students) {
+  studentList.replaceChildren();
+
+  if (students.length === 0) {
+    message.textContent = "No students found.";
+    return;
+  }
+
+  message.textContent = students.length + " student(s) found.";
+
+  students.forEach(student => {
+    const card = document.createElement("div");
+    card.className = "student";
+
+    const name = document.createElement("strong");
+    name.textContent = student.full_name;
+
+    const label = document.createElement("small");
+    label.textContent = "Campus Connect Student";
+
+    card.append(name, label);
+    studentList.appendChild(card);
+  });
+}
+
+async function loadDirectory() {
+  try {
+    const response = await fetch("/api/directory", {
+      credentials: "same-origin",
+      cache: "no-store"
+    });
+
+    const data = await response.json();
+
+    if (response.status === 401) {
+      window.location.href = "student.html";
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to load directory.");
+    }
+
+    allStudents = data.students || [];
+    displayStudents(allStudents);
+
+  } catch (error) {
+    message.textContent = error.message;
+  }
+}
+
+search.addEventListener("input", () => {
+  const term = search.value.trim().toLowerCase();
+
+  const filtered = allStudents.filter(student =>
+    (student.full_name || "").toLowerCase().includes(term)
+  );
+
+  displayStudents(filtered);
+});
+
+loadDirectory();
+</script>
+
+</body>
+</html>
