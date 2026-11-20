@@ -14,67 +14,88 @@ main{max-width:900px;margin:25px auto;padding:15px}
 .card{background:white;padding:20px;margin-bottom:20px;border-radius:12px;box-shadow:0 3px 12px #0001}
 h2{color:#123b67}
 .item{padding:14px 0;border-bottom:1px solid #e2e8f0}
-.item:last-child{border-bottom:0}
 .item h3{margin:0 0 8px}
-.item p{margin:5px 0;color:#475569;line-height:1.5}
-button{background:#123b67;color:white;border:0;padding:12px 18px;border-radius:7px;cursor:pointer}
-.logout{background:#b91c1c;float:right}
-small{color:#64748b}
+.item p{color:#475569;line-height:1.5}
+button{background:#b91c1c;color:white;border:0;padding:12px 18px;border-radius:7px;cursor:pointer}
+#status{padding:20px;text-align:center}
 </style>
 </head>
 <body>
 
 <header>
-<button class="logout" onclick="logout()">Logout</button>
+<button onclick="logout()" style="float:right">Logout</button>
 <h1>Campus Connect</h1>
 <p>Student Dashboard</p>
 </header>
 
 <main>
+<div id="status">Verifying your student account...</div>
+
+<div id="dashboard" hidden>
 <section class="card">
-<h2>Welcome, <span id="studentName">Student</span>!</h2>
+<h2>Welcome, <span id="studentName"></span>!</h2>
 <p>Email: <span id="studentEmail"></span></p>
-<p>You are now viewing your student dashboard.</p>
 </section>
 
 <section class="card">
 <h2>Latest Campus Announcements</h2>
-<div id="announcements">Loading announcements...</div>
+<div id="announcements">Loading...</div>
 </section>
 
 <section class="card">
 <h2>Upcoming Campus Events</h2>
-<div id="events">Loading events...</div>
+<div id="events">Loading...</div>
 </section>
 
 <section class="card">
 <h2>Quick Links</h2>
-<p><a href="index.html">Visit Main Website</a></p>
-<p><a href="student.html">Student Portal</a></p>
+<p><a href="index.html">Main Website</a></p>
 </section>
+</div>
 </main>
 
 <script>
-const student = JSON.parse(
-  sessionStorage.getItem("campusStudent") || "null"
-);
+const API_URL = "https://campus-connect-api-668.campusconnect668.workers.dev";
 
-if (!student) {
-  window.location.href = "student.html";
-} else {
-  document.getElementById("studentName").textContent =
-    student.full_name;
-  document.getElementById("studentEmail").textContent =
-    student.email;
+async function verifyStudent() {
+  try {
+    const response = await fetch("/api/student", {
+      credentials: "same-origin",
+      cache: "no-store"
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.authenticated) {
+      window.location.href = "student.html";
+      return;
+    }
+
+    document.getElementById("studentName").textContent =
+      data.student.full_name;
+    document.getElementById("studentEmail").textContent =
+      data.student.email;
+
+    document.getElementById("status").hidden = true;
+    document.getElementById("dashboard").hidden = false;
+
+    loadDashboard();
+  } catch (error) {
+    document.getElementById("status").textContent =
+      "Unable to verify your account. Please refresh.";
+  }
 }
 
-function logout() {
-  sessionStorage.removeItem("campusStudent");
-  window.location.href = "student.html";
+async function logout() {
+  try {
+    await fetch("/api/logout", {
+      method: "POST",
+      credentials: "same-origin"
+    });
+  } finally {
+    window.location.href = "student.html";
+  }
 }
-
-const API_URL =
-  "https://campus-connect-api-668.campusconnect668.workers.dev";
 
 function showItems(containerId, items, type) {
   const container = document.getElementById(containerId);
@@ -94,12 +115,11 @@ function showItems(containerId, items, type) {
     box.appendChild(heading);
 
     const description = document.createElement("p");
-    description.textContent =
-      item.content || item.description || "";
+    description.textContent = item.content || item.description || "";
     box.appendChild(description);
 
     if (item.category) {
-      const category = document.createElement("small");
+      const category = document.createElement("p");
       category.textContent = "Category: " + item.category;
       box.appendChild(category);
     }
@@ -129,35 +149,28 @@ async function loadDashboard() {
       ]);
 
     if (!announcementResponse.ok || !eventResponse.ok) {
-      throw new Error("Unable to load campus updates.");
+      throw new Error("Unable to load updates.");
     }
 
     const announcements = await announcementResponse.json();
     const events = await eventResponse.json();
 
-    showItems(
-      "announcements",
+    showItems("announcements",
       Array.isArray(announcements) ? announcements :
-      announcements.announcements,
-      "announcements"
-    );
+      announcements.announcements, "announcements");
 
-    showItems(
-      "events",
-      Array.isArray(events) ? events : events.events,
-      "events"
-    );
+    showItems("events",
+      Array.isArray(events) ? events : events.events, "events");
 
   } catch (error) {
     document.getElementById("announcements").textContent =
-      "Unable to load announcements. Please refresh.";
+      "Unable to load announcements.";
     document.getElementById("events").textContent =
-      "Unable to load events. Please refresh.";
+      "Unable to load events.";
   }
 }
 
-if (student) loadDashboard();
+verifyStudent();
 </script>
-
 </body>
 </html>
