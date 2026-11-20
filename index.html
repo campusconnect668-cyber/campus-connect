@@ -2,201 +2,249 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Campus Connect - Student Information Hub">
-    <title>Campus Connect | Student Hub</title>
-    <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Campus Connect - Student Information Hub">
+<title>Campus Connect | Student Hub</title>
+<link rel="stylesheet" href="styles.css">
+
+<style>
+.hero-banner{
+width:100%;
+max-height:430px;
+object-fit:cover;
+display:none;
+border-radius:12px;
+margin:20px auto;
+}
+.student-life-image{
+width:100%;
+max-width:750px;
+max-height:400px;
+object-fit:cover;
+display:none;
+border-radius:12px;
+margin:20px auto;
+}
+</style>
 </head>
 
 <body>
 
-    <!-- HEADER -->
-    <header>
-        <div class="logo">
-            CAMPUS <span>CONNECT</span>
-        </div>
+<header>
+<div class="logo">CAMPUS <span>CONNECT</span></div>
 
-        <button id="menu-toggle" aria-label="Toggle navigation">
-            ☰
-        </button>
+<button id="menu-toggle" aria-label="Toggle navigation">☰</button>
 
-        <nav id="navigation">
-            <a href="#home">Home</a>
-            <a href="#news">Campus News</a>
-            <a href="#academics">Academics</a>
-            <a href="#student-life">Student Life</a>
-            <a href="#contribute">Contribute</a>
-        </nav>
-    </header>
+<nav id="navigation">
+<a href="#home">Home</a>
+<a href="#news">Campus News</a>
+<a href="#academics">Academics</a>
+<a href="#student-life">Student Life</a>
+<a href="#contribute">Contribute</a>
+</nav>
+</header>
 
-    <!-- HERO SECTION -->
-    <section id="home" class="hero">
-        <h1>Welcome to Campus Connect</h1>
-        <p>
-            Your campus, your information, your connection.
-            Stay informed and connected with campus activities.
-        </p>
-        <a href="#news" class="btn">Explore Campus News</a>
-    </section>
+<section id="home" class="hero">
 
-    <!-- SEARCH SECTION -->
-    <section class="search-section">
-        <h2>Find Campus Information</h2>
-        <input
-            type="search"
-            id="search-input"
-            placeholder="Search campus information..."
-        >
-    </section>
+<img id="homepage-banner" class="hero-banner" alt="Campus Connect Homepage Banner">
 
-    <!-- QUICK ACCESS -->
-    <section id="academics" class="quick-access">
-        <h2>Quick Access</h2>
+<h1 id="hero-title">Welcome to Campus Connect</h1>
 
-        <div class="cards">
-            <div class="card">
-                <h3>Academic Updates</h3>
-                <p>Stay informed about academic information.</p>
-            </div>
+<p id="hero-description">
+Your campus, your information, your connection.
+Stay informed and connected with campus activities.
+</p>
 
-            <div class="card">
-                <h3>Examinations</h3>
-                <p>Find examination-related updates.</p>
-            </div>
+<a href="#news" class="btn" id="hero-button">Explore Campus News</a>
 
-            <div class="card">
-                <h3>Student Resources</h3>
-                <p>Access useful student resources.</p>
-            </div>
+</section>
 
-            <div class="card">
-                <h3>Campus Events</h3>
-                <p>Discover activities and campus events.</p>
-            </div>
-        </div>
-    </section>
+<section class="search-section">
+<h2>Find Campus Information</h2>
+<input type="search" id="search-input" placeholder="Search campus information...">
+</section>
 
-    <!-- CAMPUS NEWS -->
-    <section id="news" class="news-section">
-        <h2>Latest Campus News</h2>
+<section id="academics" class="quick-access">
+<h2>Quick Access</h2>
 
-        <p class="notice">
-            Preview content only. Official announcements
-            must be verified before publication.
-        </p>
+<div class="cards">
+<div class="card">
+<h3>Academic Updates</h3>
+<p>Stay informed about academic information.</p>
+</div>
 
-        <div class="filters">
-            <button data-category="all">All</button>
-            <button data-category="academic">Academic</button>
-            <button data-category="events">Events</button>
-            <button data-category="general">General</button>
-        </div>
+<div class="card">
+<h3>Examinations</h3>
+<p>Find examination-related updates.</p>
+</div>
 
-        <div id="news-container">
-            <article class="news-card" data-category="academic">
-                <h3>Academic Information</h3>
-                <p>
-                    This section will contain verified academic
-                    announcements and updates.
-                </p>
-            </article>
+<div class="card">
+<h3>Student Resources</h3>
+<p>Access useful student resources.</p>
+</div>
 
-            <article class="news-card" data-category="events">
-                <h3>Campus Activities</h3>
-                <p>
-                    This section will contain approved campus
-                    activities and event information.
-                </p>
-            </article>
+<div class="card">
+<h3>Campus Events</h3>
+<p>Discover activities and campus events.</p>
+</div>
+</div>
+</section>
 
-            <article class="news-card" data-category="general">
-                <h3>Student Information</h3>
-                <p>
-                    Important student information will appear here.
-                </p>
-            </article>
-        </div>
-    </section>
+<section id="news" class="news-section">
+<h2>Latest Campus News</h2>
 
-    <!-- STUDENT LIFE -->
-    <section id="student-life">
-        <h2>Student Life</h2>
-        <p>
-            A place to discover student opportunities,
-            activities, resources and campus experiences.
-        </p>
-    </section>
+<p class="notice">
+Preview content only. Official announcements must be verified before publication.
+</p>
 
-    <!-- CONTRIBUTION FORM -->
-    <section id="contribute" class="contribute-section">
-        <h2>Contribute to Campus Connect</h2>
+<div class="filters">
+<button data-category="all">All</button>
+<button data-category="academic">Academic</button>
+<button data-category="events">Events</button>
+<button data-category="general">General</button>
+</div>
 
-        <p>
-            Have useful campus information?
-            Share it with the Campus Connect team.
-        </p>
+<div id="news-container">
+<article class="news-card" data-category="academic">
+<h3>Academic Information</h3>
+<p>This section will contain verified academic announcements and updates.</p>
+</article>
 
-        <form id="contribution-form">
+<article class="news-card" data-category="events">
+<h3>Campus Activities</h3>
+<p>This section will contain approved campus activities and event information.</p>
+</article>
 
-            <input
-                type="text"
-                id="student-name"
-                placeholder="Your name"
-                required
-            >
+<article class="news-card" data-category="general">
+<h3>Student Information</h3>
+<p>Important student information will appear here.</p>
+</article>
+</div>
+</section>
 
-            <input
-                type="email"
-                id="student-email"
-                placeholder="Your email address"
-                required
-            >
+<section id="student-life">
+<h2 id="student-life-title">Student Life</h2>
 
-            <input
-                type="text"
-                id="contribution-title"
-                placeholder="Contribution title"
-                required
-            >
+<img id="student-life-image" class="student-life-image" alt="Campus Connect Student Life">
 
-            <textarea
-                id="contribution-message"
-                placeholder="Write your contribution..."
-                required
-            ></textarea>
+<p id="student-life-content">
+A place to discover student opportunities, activities, resources and campus experiences.
+</p>
+</section>
 
-            <button type="submit">Submit Contribution</button>
+<section id="contribute" class="contribute-section">
+<h2>Contribute to Campus Connect</h2>
 
-        </form>
+<p>
+Have useful campus information?
+Share it with the Campus Connect team.
+</p>
 
-        <p id="form-message"></p>
-    </section>
+<form id="contribution-form">
 
-    <!-- FOOTER -->
-    <footer>
-        <h3>CAMPUS CONNECT</h3>
+<input type="text" id="student-name" placeholder="Your name" required>
 
-        <p>
-            Connecting students with useful campus information.
-        </p>
+<input type="email" id="student-email" placeholder="Your email address" required>
 
-        <p>
-            Contact us:
-            <a href="mailto:campusconnect668@gmail.com">
-                campusconnect668@gmail.com
-            </a>
-        </p>
+<input type="text" id="contribution-title" placeholder="Contribution title" required>
 
-        <p>
-            Independent student project preview.
-            Not an official university website.
-        </p>
+<textarea id="contribution-message" placeholder="Write your contribution..." required></textarea>
 
-        <p>&copy; 2026 Campus Connect. All rights reserved.</p>
-    </footer>
+<button type="submit">Submit Contribution</button>
 
-    <script src="script.js"></script>
+</form>
+
+<p id="form-message"></p>
+</section>
+
+<footer>
+<h3>CAMPUS CONNECT</h3>
+
+<p>Connecting students with useful campus information.</p>
+
+<p>
+Contact us:
+<a id="contact-email" href="mailto:campusconnect668@gmail.com">
+campusconnect668@gmail.com
+</a>
+</p>
+
+<p>
+Independent student project preview.
+Not an official university website.
+</p>
+
+<p>&copy; 2026 Campus Connect. All rights reserved.</p>
+</footer>
+
+<script src="script.js"></script>
+
+<script>
+async function loadHomepageSettings(){
+try{
+const response=await fetch("/api/website-settings",{cache:"no-store"});
+if(!response.ok)return;
+
+const data=await response.json();
+
+if(data.hero_title)
+document.getElementById("hero-title").textContent=data.hero_title;
+
+if(data.hero_description)
+document.getElementById("hero-description").textContent=data.hero_description;
+
+if(data.hero_button)
+document.getElementById("hero-button").textContent=data.hero_button;
+
+if(data.student_life_title)
+document.getElementById("student-life-title").textContent=data.student_life_title;
+
+if(data.student_life_content)
+document.getElementById("student-life-content").textContent=data.student_life_content;
+
+if(data.contact_email){
+const email=document.getElementById("contact-email");
+email.textContent=data.contact_email;
+email.href="mailto:"+data.contact_email;
+}
+
+}catch(error){
+console.error("Homepage settings error:",error);
+}
+}
+
+async function loadHomepageImages(){
+try{
+const response=await fetch("/api/website-images",{cache:"no-store"});
+if(!response.ok)return;
+
+const data=await response.json();
+const images=data.images||[];
+
+const banner=images.find(item=>item.image_type==="banner");
+const studentLife=images.find(item=>item.image_type==="student-life");
+
+if(banner){
+const image=document.getElementById("homepage-banner");
+image.src=banner.image_url;
+image.style.display="block";
+}
+
+if(studentLife){
+const image=document.getElementById("student-life-image");
+image.src=studentLife.image_url;
+image.style.display="block";
+}
+
+}catch(error){
+console.error("Homepage images error:",error);
+}
+}
+
+loadHomepageSettings();
+loadHomepageImages();
+</script>
 
 </body>
 </html>
