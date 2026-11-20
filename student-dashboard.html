@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Connect | Student Dashboard</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#1e293b}
+header{background:#123b67;color:white;padding:22px}
+header h1{margin:0}
+main{max-width:900px;margin:25px auto;padding:15px}
+.card{background:white;padding:20px;margin-bottom:20px;border-radius:12px;box-shadow:0 3px 12px #0001}
+h2{color:#123b67}
+.item{padding:14px 0;border-bottom:1px solid #e2e8f0}
+.item:last-child{border-bottom:0}
+.item h3{margin:0 0 8px}
+.item p{margin:5px 0;color:#475569;line-height:1.5}
+button{background:#123b67;color:white;border:0;padding:12px 18px;border-radius:7px;cursor:pointer}
+.logout{background:#b91c1c;float:right}
+small{color:#64748b}
+</style>
+</head>
+<body>
+
+<header>
+<button class="logout" onclick="logout()">Logout</button>
+<h1>Campus Connect</h1>
+<p>Student Dashboard</p>
+</header>
+
+<main>
+<section class="card">
+<h2>Welcome, <span id="studentName">Student</span>!</h2>
+<p>Email: <span id="studentEmail"></span></p>
+<p>You are now viewing your student dashboard.</p>
+</section>
+
+<section class="card">
+<h2>Latest Campus Announcements</h2>
+<div id="announcements">Loading announcements...</div>
+</section>
+
+<section class="card">
+<h2>Upcoming Campus Events</h2>
+<div id="events">Loading events...</div>
+</section>
+
+<section class="card">
+<h2>Quick Links</h2>
+<p><a href="index.html">Visit Main Website</a></p>
+<p><a href="student.html">Student Portal</a></p>
+</section>
+</main>
+
+<script>
+const student = JSON.parse(
+  sessionStorage.getItem("campusStudent") || "null"
+);
+
+if (!student) {
+  window.location.href = "student.html";
+} else {
+  document.getElementById("studentName").textContent =
+    student.full_name;
+  document.getElementById("studentEmail").textContent =
+    student.email;
+}
+
+function logout() {
+  sessionStorage.removeItem("campusStudent");
+  window.location.href = "student.html";
+}
+
+const API_URL =
+  "https://campus-connect-api-668.campusconnect668.workers.dev";
+
+function showItems(containerId, items, type) {
+  const container = document.getElementById(containerId);
+  container.replaceChildren();
+
+  if (!Array.isArray(items) || items.length === 0) {
+    container.textContent = "No " + type + " available yet.";
+    return;
+  }
+
+  items.forEach(item => {
+    const box = document.createElement("div");
+    box.className = "item";
+
+    const heading = document.createElement("h3");
+    heading.textContent = item.title || "Campus Update";
+    box.appendChild(heading);
+
+    const description = document.createElement("p");
+    description.textContent =
+      item.content || item.description || "";
+    box.appendChild(description);
+
+    if (item.category) {
+      const category = document.createElement("small");
+      category.textContent = "Category: " + item.category;
+      box.appendChild(category);
+    }
+
+    if (item.event_date) {
+      const date = document.createElement("p");
+      date.textContent = "Date: " + item.event_date;
+      box.appendChild(date);
+    }
+
+    if (item.location) {
+      const location = document.createElement("p");
+      location.textContent = "Location: " + item.location;
+      box.appendChild(location);
+    }
+
+    container.appendChild(box);
+  });
+}
+
+async function loadDashboard() {
+  try {
+    const [announcementResponse, eventResponse] =
+      await Promise.all([
+        fetch(API_URL + "/announcements"),
+        fetch(API_URL + "/events")
+      ]);
+
+    if (!announcementResponse.ok || !eventResponse.ok) {
+      throw new Error("Unable to load campus updates.");
+    }
+
+    const announcements = await announcementResponse.json();
+    const events = await eventResponse.json();
+
+    showItems(
+      "announcements",
+      Array.isArray(announcements) ? announcements :
+      announcements.announcements,
+      "announcements"
+    );
+
+    showItems(
+      "events",
+      Array.isArray(events) ? events : events.events,
+      "events"
+    );
+
+  } catch (error) {
+    document.getElementById("announcements").textContent =
+      "Unable to load announcements. Please refresh.";
+    document.getElementById("events").textContent =
+      "Unable to load events. Please refresh.";
+  }
+}
+
+if (student) loadDashboard();
+</script>
+
+</body>
+</html>
