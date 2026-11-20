@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Campus Connect | Admin Login</title>
+<title>Campus Connect | Admin Dashboard</title>
 
 <style>
 * {
@@ -16,7 +17,6 @@ body {
     font-family: Arial, sans-serif;
     background: #f1f5f9;
     color: #1e293b;
-    min-height: 100vh;
 }
 
 header {
@@ -26,35 +26,32 @@ header {
     text-align: center;
 }
 
-header h1 {
-    font-size: 25px;
-}
-
 .container {
     max-width: 950px;
     margin: 35px auto;
     padding: 15px;
 }
 
-.login-box {
+.login-box, .card, .section {
     background: white;
-    max-width: 420px;
-    margin: 50px auto;
-    padding: 30px;
+    padding: 25px;
     border-radius: 12px;
-    box-shadow: 0 3px 15px #00000012;
+    box-shadow: 0 3px 12px #00000010;
 }
 
-.login-box h2 {
-    text-align: center;
+.login-box {
+    max-width: 420px;
+    margin: 45px auto;
+}
+
+h2 {
     color: #123b67;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .login-box p {
-    text-align: center;
     color: #64748b;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 label {
@@ -83,14 +80,13 @@ button {
     cursor: pointer;
 }
 
-button:disabled {
-    opacity: 0.6;
-    cursor: wait;
+.logout {
+    background: #dc2626;
+    width: auto;
 }
 
 .message {
     margin-top: 15px;
-    text-align: center;
     color: #dc2626;
     line-height: 1.5;
 }
@@ -99,26 +95,16 @@ button:disabled {
     display: none;
 }
 
-.welcome {
-    margin-bottom: 25px;
-}
-
 .cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 18px;
-}
-
-.card, .section {
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 3px 12px #00000010;
+    margin-top: 20px;
 }
 
 .card h3 {
     color: #123b67;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .card p {
@@ -129,21 +115,11 @@ button:disabled {
     margin-top: 25px;
 }
 
-.section h2 {
-    margin-bottom: 12px;
-}
-
 .notice {
     background: #fff7ed;
     border-left: 4px solid #f59e0b;
     padding: 14px;
-    margin-top: 15px;
     line-height: 1.5;
-}
-
-.logout {
-    width: auto;
-    background: #dc2626;
 }
 
 footer {
@@ -168,12 +144,10 @@ footer {
         <p>Sign in to access your dashboard.</p>
 
         <form id="loginForm">
-
             <label for="email">Admin Email</label>
             <input
                 type="email"
                 id="email"
-                placeholder="Enter administrator email"
                 value="campusconnect668@gmail.com"
                 required
             >
@@ -190,21 +164,17 @@ footer {
                 Login
             </button>
 
-            <div class="message" id="loginMessage"></div>
-
+            <div class="message" id="message"></div>
         </form>
     </div>
 
     <div class="dashboard" id="dashboard">
+        <h2>Welcome, Administrator!</h2>
+        <p>Manage your Campus Connect platform.</p>
 
-        <div class="welcome">
-            <h2>Welcome, Administrator!</h2>
-            <p>Manage your Campus Connect student information platform.</p>
-            <button class="logout" id="logoutButton">Logout</button>
-        </div>
+        <button class="logout" id="logoutButton">Logout</button>
 
         <div class="cards">
-
             <div class="card">
                 <h3>Student Contributions</h3>
                 <p>Student-submitted information.</p>
@@ -224,36 +194,29 @@ footer {
                 <h3>Website Management</h3>
                 <p>Campus information and updates.</p>
             </div>
-
         </div>
 
         <div class="section">
             <h2>Administration</h2>
-
             <div class="notice">
-                <strong>Important:</strong>
-                Your login is connected, but the management
-                functions are not yet implemented. Student
-                contributions, announcements and events cannot
-                be edited from this dashboard yet.
+                Login is connected. Management functions still
+                need to be implemented and protected on the server.
             </div>
         </div>
-
     </div>
 
 </div>
 
 <footer>
-    <p>Campus Connect Admin Dashboard © 2026</p>
+    Campus Connect Admin Dashboard © 2026
 </footer>
 
 <script>
-const API = "https://campus-connect-admin-login.campusconnect668.workers.dev";
+const API = "/api/admin";
 
 const loginBox = document.getElementById("loginBox");
 const dashboard = document.getElementById("dashboard");
-const loginForm = document.getElementById("loginForm");
-const loginMessage = document.getElementById("loginMessage");
+const message = document.getElementById("message");
 const loginButton = document.getElementById("loginButton");
 
 function showDashboard() {
@@ -269,8 +232,7 @@ function showLogin() {
 async function checkSession() {
     try {
         const response = await fetch(API + "/session", {
-            method: "GET",
-            credentials: "include"
+            credentials: "same-origin"
         });
 
         const data = await response.json();
@@ -282,52 +244,46 @@ async function checkSession() {
         }
     } catch (error) {
         showLogin();
-        loginMessage.textContent =
-            "Could not connect. Please check your internet connection.";
+        message.textContent = "Could not connect. Please try again.";
     }
 }
 
-loginForm.addEventListener("submit", async function(event) {
+document.getElementById("loginForm").addEventListener("submit", async function(event) {
     event.preventDefault();
 
     loginButton.disabled = true;
     loginButton.textContent = "Signing in...";
-    loginMessage.textContent = "";
-
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+    message.textContent = "";
 
     try {
         const response = await fetch(API + "/login", {
             method: "POST",
-            credentials: "include",
+            credentials: "same-origin",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                email: email,
-                password: password
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value
             })
         });
 
         const data = await response.json();
 
         if (!response.ok || !data.ok) {
-            loginMessage.textContent =
-                data.error || "Login failed. Please try again.";
+            message.textContent = data.error || "Login failed.";
             return;
         }
 
         await checkSession();
 
         if (dashboard.style.display !== "block") {
-            loginMessage.textContent =
-                "Login was accepted, but your browser did not retain the session cookie. Browser cookie restrictions may be preventing access.";
+            message.textContent =
+                "Login accepted, but the session could not be verified. Please try again.";
         }
 
     } catch (error) {
-        loginMessage.textContent =
-            "Connection error. Please try again.";
+        message.textContent = "Connection error. Please try again.";
     } finally {
         loginButton.disabled = false;
         loginButton.textContent = "Login";
@@ -338,14 +294,14 @@ document.getElementById("logoutButton").addEventListener("click", async function
     try {
         await fetch(API + "/logout", {
             method: "POST",
-            credentials: "include"
+            credentials: "same-origin"
         });
     } catch (error) {
-        // Return to the login screen even if logout cannot connect.
+        // Return to login screen.
     }
 
-    loginForm.reset();
-    loginMessage.textContent = "";
+    document.getElementById("password").value = "";
+    message.textContent = "";
     showLogin();
 });
 
