@@ -80,6 +80,11 @@ button {
     cursor: pointer;
 }
 
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .logout {
     background: #dc2626;
     width: auto;
@@ -120,6 +125,24 @@ button {
     border-left: 4px solid #f59e0b;
     padding: 14px;
     line-height: 1.5;
+}
+
+.contribution-item {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 8px;
+    margin-top: 14px;
+    overflow-wrap: anywhere;
+}
+
+.contribution-item h3 {
+    color: #123b67;
+    margin-bottom: 8px;
+}
+
+.contribution-item p {
+    margin-top: 8px;
+    white-space: pre-wrap;
 }
 
 footer {
@@ -174,10 +197,14 @@ footer {
 
         <button class="logout" id="logoutButton">Logout</button>
 
-        <div class="cards">
+        <div class="cards" id="dashboardCards">
+
             <div class="card">
                 <h3>Student Contributions</h3>
                 <p>Student-submitted information.</p>
+                <button type="button" id="viewContributionsButton">
+                    View Contributions
+                </button>
             </div>
 
             <div class="card">
@@ -194,13 +221,28 @@ footer {
                 <h3>Website Management</h3>
                 <p>Campus information and updates.</p>
             </div>
+
         </div>
 
-        <div class="section">
+        <div class="section" id="contributionsSection" style="display:none;">
+            <h2>Student Contributions</h2>
+
+            <button type="button" id="backButton">
+                Back to Dashboard
+            </button>
+
+            <p id="contributionsStatus" style="margin-top:15px;">
+                Contributions will appear here.
+            </p>
+
+            <div id="contributionsList"></div>
+        </div>
+
+        <div class="section" id="adminNotice">
             <h2>Administration</h2>
             <div class="notice">
-                Login is connected. Management functions still
-                need to be implemented and protected on the server.
+                Your administrator login is connected.
+                More management functions will be added.
             </div>
         </div>
     </div>
@@ -288,6 +330,79 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
         loginButton.disabled = false;
         loginButton.textContent = "Login";
     }
+});
+
+const contributionsSection =
+    document.getElementById("contributionsSection");
+
+const contributionsList =
+    document.getElementById("contributionsList");
+
+const contributionsStatus =
+    document.getElementById("contributionsStatus");
+
+document.getElementById("viewContributionsButton")
+.addEventListener("click", async function() {
+
+    document.getElementById("dashboardCards").style.display = "none";
+    document.getElementById("adminNotice").style.display = "none";
+    contributionsSection.style.display = "block";
+
+    contributionsList.replaceChildren();
+    contributionsStatus.textContent = "Loading contributions...";
+
+    try {
+        const response = await fetch("/api/contributions", {
+            credentials: "same-origin",
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Unable to load contributions.");
+        }
+
+        const items = data.contributions || [];
+
+        if (items.length === 0) {
+            contributionsStatus.textContent =
+                "No student contributions have been submitted yet.";
+            return;
+        }
+
+        contributionsStatus.textContent =
+            items.length + " contribution(s) received.";
+
+        items.forEach(function(item) {
+            const article = document.createElement("div");
+            article.className = "contribution-item";
+
+            const heading = document.createElement("h3");
+            heading.textContent = item.student_name || "Student";
+
+            const email = document.createElement("p");
+            email.textContent = item.email || "No email provided";
+
+            const content = document.createElement("p");
+            content.textContent = item.message || "";
+
+            article.append(heading, email, content);
+            contributionsList.appendChild(article);
+        });
+
+    } catch (error) {
+        contributionsStatus.textContent =
+            error.message || "Could not load contributions.";
+    }
+});
+
+document.getElementById("backButton").addEventListener("click", function() {
+    contributionsSection.style.display = "none";
+    document.getElementById("dashboardCards").style.display = "grid";
+    document.getElementById("adminNotice").style.display = "block";
 });
 
 document.getElementById("logoutButton").addEventListener("click", async function() {
