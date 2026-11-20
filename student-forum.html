@@ -1,0 +1,254 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Connect | Student Forum</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#1e293b}
+header{background:#123b67;color:white;padding:20px;text-align:center}
+header h1{margin:0}
+.container{max-width:850px;margin:25px auto;padding:15px}
+.card{background:white;padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 3px 12px #0001}
+h2{color:#123b67;margin-top:0}
+input,textarea{width:100%;padding:13px;margin:8px 0 15px;border:1px solid #cbd5e1;border-radius:7px;font-size:16px}
+textarea{min-height:110px;resize:vertical}
+button{background:#123b67;color:white;border:0;padding:12px 18px;border-radius:7px;cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}
+.post{background:white;padding:20px;border-radius:12px;margin-bottom:18px;box-shadow:0 3px 12px #0001}
+.post h3{color:#123b67;margin:0 0 10px}
+.meta{font-size:13px;color:#64748b;margin-bottom:12px}
+.post-content{white-space:pre-wrap;overflow-wrap:anywhere}
+.comments{background:#f1f5f9;padding:12px;border-radius:8px;margin-top:15px}
+.comment{padding:10px 0;border-bottom:1px solid #cbd5e1}
+.comment:last-child{border-bottom:0}
+.comment-form{display:flex;gap:8px;margin-top:12px}
+.comment-form input{margin:0;min-width:0}
+.message{margin:12px 0;font-weight:bold}
+a{color:white}
+nav{margin-top:12px}
+</style>
+</head>
+<body>
+
+<header>
+<h1>Campus Connect</h1>
+<p>Student Discussion Forum</p>
+<nav><a href="student-dashboard.html">Back to Student Dashboard</a></nav>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h2>Create a Discussion</h2>
+<form id="postForm">
+<label>Discussion Title</label>
+<input id="postTitle" maxlength="150" required placeholder="Enter discussion title">
+
+<label>Your Message</label>
+<textarea id="postContent" maxlength="5000" required placeholder="Write your message here..."></textarea>
+
+<button id="postButton" type="submit">Publish Discussion</button>
+</form>
+<div id="postMessage" class="message" role="status"></div>
+</div>
+
+<h2>Student Discussions</h2>
+<div id="forumMessage" class="message">Loading discussions...</div>
+<div id="posts"></div>
+
+</div>
+
+<script>
+const postsContainer = document.getElementById("posts");
+const forumMessage = document.getElementById("forumMessage");
+const postMessage = document.getElementById("postMessage");
+
+async function checkStudent() {
+  try {
+    const response = await fetch("/api/student", {
+      credentials: "same-origin"
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.authenticated) {
+      window.location.href = "student.html";
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    forumMessage.textContent = "Unable to verify your login. Please try again.";
+    return false;
+  }
+}
+
+function makeElement(tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
+  return element;
+}
+
+async function loadForum() {
+  forumMessage.textContent = "Loading discussions...";
+  postsContainer.replaceChildren();
+
+  try {
+    const response = await fetch("/api/forum", {
+      credentials: "same-origin"
+    });
+
+    const data = await response.json();
+
+    if (response.status === 401) {
+      window.location.href = "student.html";
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not load discussions.");
+    }
+
+    const comments = data.comments || [];
+    const posts = data.posts || [];
+
+    if (posts.length === 0) {
+      forumMessage.textContent = "No discussions yet. Be the first to post!";
+      return;
+    }
+
+    forumMessage.textContent = "";
+
+    posts.forEach(post => {
+      const card = makeElement("article", "post");
+      const title = makeElement("h3", "", post.title);
+      const meta = makeElement(
+        "div",
+        "meta",
+        "Posted by " + post.student_name + " · " + post.created_at
+      );
+      const content = makeElement("div", "post-content", post.content);
+
+      card.append(title, meta, content);
+
+      const commentBox = makeElement("div", "comments");
+      commentBox.append(makeElement("strong", "", "Comments"));
+
+      const postComments = comments.filter(
+        comment => Number(comment.post_id) === Number(post.id)
+      );
+
+      if (postComments.length === 0) {
+        commentBox.append(makeElement("p", "", "No comments yet."));
+      } else {
+        postComments.forEach(comment => {
+          const item = makeElement("div", "comment");
+          item.append(
+            makeElement("strong", "", comment.student_name),
+            makeElement("p", "", comment.comment),
+            makeElement("small", "meta", comment.created_at)
+          );
+          commentBox.append(item);
+        });
+      }
+
+      const form = makeElement("form", "comment-form");
+      const input = document.createElement("input");
+      input.type = "text";
+      input.maxLength = 2000;
+      input.placeholder = "Write a comment...";
+      input.required = true;
+
+      const button = makeElement("button", "", "Comment");
+      button.type = "submit";
+
+      form.append(input, button);
+
+      form.addEventListener("submit", async event => {
+        event.preventDefault();
+        button.disabled = true;
+
+        try {
+          const result = await fetch("/api/forum", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+              action: "comment",
+              post_id: post.id,
+              comment: input.value
+            })
+          });
+
+          const resultData = await result.json();
+
+          if (!result.ok) {
+            throw new Error(resultData.error || "Could not add comment.");
+          }
+
+          await loadForum();
+
+        } catch (error) {
+          alert(error.message);
+          button.disabled = false;
+        }
+      });
+
+      commentBox.append(form);
+      card.append(commentBox);
+      postsContainer.append(card);
+    });
+
+  } catch (error) {
+    forumMessage.textContent = error.message;
+  }
+}
+
+document.getElementById("postForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const button = document.getElementById("postButton");
+  button.disabled = true;
+  postMessage.textContent = "Publishing discussion...";
+
+  try {
+    const response = await fetch("/api/forum", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        action: "post",
+        title: document.getElementById("postTitle").value,
+        content: document.getElementById("postContent").value
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not publish discussion.");
+    }
+
+    document.getElementById("postForm").reset();
+    postMessage.textContent = "Discussion published successfully!";
+    await loadForum();
+
+  } catch (error) {
+    postMessage.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+(async function startForum() {
+  const authenticated = await checkStudent();
+  if (authenticated) await loadForum();
+})();
+</script>
+
+</body>
+</html>
