@@ -104,13 +104,17 @@ registerForm.onsubmit = async (event) => {
 
     const data = await response.json();
 
-    if (!response.ok) throw new Error(data.error || "Registration failed.");
+    if (!response.ok) {
+      throw new Error(data.error || "Registration failed.");
+    }
+
+    const savedEmail = document.getElementById("registerEmail").value;
 
     showMessage("Account created! You can now log in.", true);
     registerForm.reset();
     loginTab.click();
-    document.getElementById("loginEmail").value =
-      document.getElementById("registerEmail").value;
+    document.getElementById("loginEmail").value = savedEmail;
+
   } catch (error) {
     showMessage(error.message);
   }
@@ -124,6 +128,7 @@ loginForm.onsubmit = async (event) => {
     const response = await fetch("/api/login", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
+      credentials: "same-origin",
       body: JSON.stringify({
         email: document.getElementById("loginEmail").value,
         password: document.getElementById("loginPassword").value
@@ -132,10 +137,20 @@ loginForm.onsubmit = async (event) => {
 
     const data = await response.json();
 
-    if (!response.ok) throw new Error(data.error || "Login failed.");
+    if (!response.ok) {
+      throw new Error(data.error || "Login failed.");
+    }
 
-    sessionStorage.setItem("campusStudent", JSON.stringify(data.student));
-    showMessage("Welcome, " + data.student.full_name + "! Login successful.", true);
+    if (!data.student) {
+      throw new Error("Login response did not include student details.");
+    }
+
+    showMessage("Login successful! Opening your dashboard...", true);
+
+    setTimeout(() => {
+      window.location.href = "student-dashboard.html";
+    }, 1000);
+
   } catch (error) {
     showMessage(error.message);
   }
