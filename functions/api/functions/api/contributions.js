@@ -1,1 +1,0 @@
-https://campus-connect-admin-login.campusconnect668.workers.dev
