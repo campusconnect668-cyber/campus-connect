@@ -66,8 +66,12 @@ a{color:#123b67}
 <h2>Quick Links</h2>
 
 <a class="quick-link" href="student-profile.html">My Student Profile</a>
+
 <a class="quick-link" href="student-forum.html">Student Discussion Forum</a>
+
 <a class="quick-link" href="student-directory.html">Student Directory</a>
+
+<a class="quick-link" href="student-groups.html">💬 Student Group Chats</a>
 
 <a class="quick-link" href="student-messages.html">
 Private Student Messages
@@ -75,6 +79,7 @@ Private Student Messages
 </a>
 
 <a class="quick-link" href="index.html">Main Campus Connect Website</a>
+
 </section>
 </div>
 </main>
@@ -144,7 +149,6 @@ async function checkNewMessages() {
       Number(message.receiver_id) !== Number(message.sender_id)
     );
 
-    // Keep only messages received by this logged-in student.
     const studentResponse = await fetch("/api/student", {
       credentials: "same-origin",
       cache: "no-store"
