@@ -20,6 +20,7 @@ textarea{min-height:130px;resize:vertical}
 button{background:#123b67;color:white;border:0;padding:13px 20px;border-radius:6px;margin-top:18px;width:100%;font-size:16px;cursor:pointer}
 button:disabled{opacity:.6;cursor:not-allowed}
 .logout{background:#dc2626;width:auto}
+.delete-button{background:#dc2626}
 .message{margin-top:15px;color:#dc2626;line-height:1.5}
 .dashboard{display:none}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin-top:20px}
@@ -32,6 +33,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
 .contribution-item p{margin-top:8px;white-space:pre-wrap}
 footer{text-align:center;padding:25px;color:#64748b}
 .status{margin-top:15px;line-height:1.5}
+hr{margin:25px 0;border:0;border-top:1px solid #cbd5e1}
 </style>
 </head>
 <body>
@@ -46,54 +48,42 @@ footer{text-align:center;padding:25px;color:#64748b}
 <div class="login-box" id="loginBox">
 <h2>Administrator Login</h2>
 <p>Sign in to access your dashboard.</p>
-
 <form id="loginForm">
 <label for="email">Admin Email</label>
 <input type="email" id="email" value="campusconnect668@gmail.com" required>
-
 <label for="password">Password</label>
 <input type="password" id="password" placeholder="Enter your password" required>
-
 <button type="submit" id="loginButton">Login</button>
 <div class="message" id="message"></div>
 </form>
 </div>
 
 <div class="dashboard" id="dashboard">
-
 <h2>Welcome, Administrator!</h2>
 <p>Manage your Campus Connect platform.</p>
-
 <button class="logout" id="logoutButton">Logout</button>
 
 <div class="cards" id="dashboardCards">
-
 <div class="card">
 <h3>Student Contributions</h3>
 <p>Student-submitted information.</p>
 <button type="button" id="viewContributionsButton">View Contributions</button>
 </div>
-
 <div class="card">
 <h3>Announcements</h3>
-<p>Create and publish campus announcements.</p>
+<p>Create, view and delete announcements.</p>
 <button type="button" id="openAnnouncementsButton">Manage Announcements</button>
 </div>
-
 <div class="card">
 <h3>Campus Events</h3>
-<p>Create and publish upcoming campus events.</p>
+<p>Create, view and delete campus events.</p>
 <button type="button" id="openEventsButton">Manage Events</button>
 </div>
-
 <div class="card">
 <h3>Website Management</h3>
 <p>Edit homepage content and contact information.</p>
-<button type="button" onclick="window.location.href='website-management.html'">
-Open Website Management
-</button>
+<button type="button" onclick="window.location.href='website-management.html'">Open Website Management</button>
 </div>
-
 </div>
 
 <div class="section" id="contributionsSection" style="display:none">
@@ -110,7 +100,6 @@ Open Website Management
 <form id="announcementForm">
 <label for="announcementTitle">Announcement Title</label>
 <input id="announcementTitle" type="text" maxlength="200" required>
-
 <label for="announcementCategory">Category</label>
 <select id="announcementCategory">
 <option value="General">General</option>
@@ -119,13 +108,17 @@ Open Website Management
 <option value="Important">Important</option>
 <option value="Events">Events</option>
 </select>
-
 <label for="announcementContent">Announcement Details</label>
 <textarea id="announcementContent" maxlength="5000" required></textarea>
-
 <button type="submit" id="publishButton">Publish Announcement</button>
 <p id="announcementStatus" class="status"></p>
 </form>
+
+<hr>
+<h2>Published Announcements</h2>
+<button type="button" id="refreshAnnouncementsButton">Refresh Announcements</button>
+<p id="announcementListStatus" class="status"></p>
+<div id="announcementsList"></div>
 </div>
 
 <div class="section" id="eventsSection" style="display:none">
@@ -135,19 +128,21 @@ Open Website Management
 <form id="eventForm">
 <label for="eventTitle">Event Title</label>
 <input id="eventTitle" type="text" maxlength="200" required>
-
 <label for="eventDescription">Event Description</label>
 <textarea id="eventDescription" maxlength="5000" required></textarea>
-
 <label for="eventDate">Event Date</label>
 <input id="eventDate" type="date" required>
-
 <label for="eventLocation">Event Location</label>
 <input id="eventLocation" type="text" maxlength="250" required>
-
 <button type="submit" id="publishEventButton">Publish Event</button>
 <p id="eventStatus" class="status"></p>
 </form>
+
+<hr>
+<h2>Published Events</h2>
+<button type="button" id="refreshEventsButton">Refresh Events</button>
+<p id="eventListStatus" class="status"></p>
+<div id="eventsList"></div>
 </div>
 
 <div class="section" id="adminNotice">
@@ -156,7 +151,6 @@ Open Website Management
 Your administrator login is connected. Use the dashboard to manage Campus Connect.
 </div>
 </div>
-
 </div>
 </div>
 
@@ -164,7 +158,6 @@ Your administrator login is connected. Use the dashboard to manage Campus Connec
 
 <script>
 const API="/api/admin";
-
 const loginBox=document.getElementById("loginBox");
 const dashboard=document.getElementById("dashboard");
 const message=document.getElementById("message");
@@ -174,12 +167,10 @@ function showDashboard(){
 loginBox.style.display="none";
 dashboard.style.display="block";
 }
-
 function showLogin(){
 dashboard.style.display="none";
 loginBox.style.display="block";
 }
-
 async function checkSession(){
 try{
 const response=await fetch(API+"/session",{credentials:"same-origin"});
@@ -197,7 +188,6 @@ event.preventDefault();
 loginButton.disabled=true;
 loginButton.textContent="Signing in...";
 message.textContent="";
-
 try{
 const response=await fetch(API+"/login",{
 method:"POST",
@@ -208,20 +198,15 @@ email:document.getElementById("email").value,
 password:document.getElementById("password").value
 })
 });
-
 const data=await response.json();
-
 if(!response.ok||!data.ok){
 message.textContent=data.error||"Login failed.";
 return;
 }
-
 await checkSession();
-
 if(dashboard.style.display!=="block"){
 message.textContent="Login accepted, but the session could not be verified. Please try again.";
 }
-
 }catch(error){
 message.textContent="Connection error. Please try again.";
 }finally{
@@ -244,7 +229,6 @@ announcementsSection.style.display="none";
 eventsSection.style.display="none";
 section.style.display="block";
 }
-
 function backToDashboard(){
 contributionsSection.style.display="none";
 announcementsSection.style.display="none";
@@ -257,55 +241,146 @@ document.getElementById("viewContributionsButton").addEventListener("click",asyn
 showSection(contributionsSection);
 contributionsList.replaceChildren();
 contributionsStatus.textContent="Loading contributions...";
-
 try{
 const response=await fetch("/api/contributions",{
 credentials:"same-origin",
 headers:{"Accept":"application/json"}
 });
-
 const data=await response.json();
-
 if(!response.ok)throw new Error(data.error||"Unable to load contributions.");
-
 const items=data.contributions||[];
-
 if(items.length===0){
 contributionsStatus.textContent="No student contributions have been submitted yet.";
 return;
 }
-
 contributionsStatus.textContent=items.length+" contribution(s) received.";
-
 items.forEach(function(item){
 const article=document.createElement("div");
 article.className="contribution-item";
-
 const heading=document.createElement("h3");
 heading.textContent=item.student_name||"Student";
-
 const email=document.createElement("p");
 email.textContent=item.email||"No email provided";
-
 const content=document.createElement("p");
 content.textContent=item.message||"";
-
 article.append(heading,email,content);
 contributionsList.appendChild(article);
 });
-
 }catch(error){
 contributionsStatus.textContent=error.message||"Could not load contributions.";
 }
 });
 
+const announcementsList=document.getElementById("announcementsList");
+const announcementListStatus=document.getElementById("announcementListStatus");
+const eventsList=document.getElementById("eventsList");
+const eventListStatus=document.getElementById("eventListStatus");
+
+async function deleteRecord(endpoint,id,label,article,refreshFunction){
+if(!confirm("Are you sure you want to delete this "+label+"?"))return;
+const button=article.querySelector(".delete-button");
+button.disabled=true;
+button.textContent="Deleting...";
+try{
+const response=await fetch(endpoint,{
+method:"DELETE",
+credentials:"same-origin",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({id:id})
+});
+const data=await response.json();
+if(!response.ok)throw new Error(data.error||"Delete failed.");
+article.remove();
+refreshFunction();
+}catch(error){
+alert(error.message||"Could not delete. Please try again.");
+button.disabled=false;
+button.textContent="Delete "+label;
+}
+}
+
+async function loadAnnouncements(){
+announcementsList.replaceChildren();
+announcementListStatus.textContent="Loading announcements...";
+try{
+const response=await fetch("/api/announcements",{credentials:"same-origin"});
+const data=await response.json();
+if(!response.ok)throw new Error(data.error||"Unable to load announcements.");
+const items=data.announcements||[];
+if(!items.length){
+announcementListStatus.textContent="No announcements published yet.";
+return;
+}
+announcementListStatus.textContent=items.length+" announcement(s) found.";
+items.forEach(function(item){
+const article=document.createElement("div");
+article.className="contribution-item";
+const heading=document.createElement("h3");
+heading.textContent=item.title||"Announcement";
+const category=document.createElement("p");
+category.textContent="Category: "+(item.category||"General");
+const details=document.createElement("p");
+details.textContent=item.content||"";
+const button=document.createElement("button");
+button.type="button";
+button.className="delete-button";
+button.textContent="Delete Announcement";
+button.addEventListener("click",()=>deleteRecord("/api/announcements",item.id,"announcement",article,loadAnnouncements));
+article.append(heading,category,details,button);
+announcementsList.appendChild(article);
+});
+}catch(error){
+announcementListStatus.textContent=error.message||"Could not load announcements.";
+}
+}
+
+async function loadEvents(){
+eventsList.replaceChildren();
+eventListStatus.textContent="Loading events...";
+try{
+const response=await fetch("/api/events",{credentials:"same-origin"});
+const data=await response.json();
+if(!response.ok)throw new Error(data.error||"Unable to load events.");
+const items=data.events||[];
+if(!items.length){
+eventListStatus.textContent="No events published yet.";
+return;
+}
+eventListStatus.textContent=items.length+" event(s) found.";
+items.forEach(function(item){
+const article=document.createElement("div");
+article.className="contribution-item";
+const heading=document.createElement("h3");
+heading.textContent=item.title||"Event";
+const date=document.createElement("p");
+date.textContent="Date: "+(item.event_date||"Not specified");
+const location=document.createElement("p");
+location.textContent="Location: "+(item.location||"Not specified");
+const details=document.createElement("p");
+details.textContent=item.description||"";
+const button=document.createElement("button");
+button.type="button";
+button.className="delete-button";
+button.textContent="Delete Event";
+button.addEventListener("click",()=>deleteRecord("/api/events",item.id,"event",article,loadEvents));
+article.append(heading,date,location,details,button);
+eventsList.appendChild(article);
+});
+}catch(error){
+eventListStatus.textContent=error.message||"Could not load events.";
+}
+}
+
 document.getElementById("openAnnouncementsButton").addEventListener("click",function(){
 showSection(announcementsSection);
+loadAnnouncements();
 });
-
 document.getElementById("openEventsButton").addEventListener("click",function(){
 showSection(eventsSection);
+loadEvents();
 });
+document.getElementById("refreshAnnouncementsButton").addEventListener("click",loadAnnouncements);
+document.getElementById("refreshEventsButton").addEventListener("click",loadEvents);
 
 document.getElementById("backContributionsButton").addEventListener("click",backToDashboard);
 document.getElementById("backAnnouncementsButton").addEventListener("click",backToDashboard);
@@ -313,14 +388,11 @@ document.getElementById("backEventsButton").addEventListener("click",backToDashb
 
 document.getElementById("announcementForm").addEventListener("submit",async function(event){
 event.preventDefault();
-
 const publishButton=document.getElementById("publishButton");
 const status=document.getElementById("announcementStatus");
-
 publishButton.disabled=true;
 publishButton.textContent="Publishing...";
 status.textContent="";
-
 try{
 const response=await fetch("/api/announcements",{
 method:"POST",
@@ -332,15 +404,12 @@ content:document.getElementById("announcementContent").value.trim(),
 category:document.getElementById("announcementCategory").value
 })
 });
-
 const data=await response.json();
-
 if(!response.ok)throw new Error(data.error||"Announcement could not be published.");
-
 status.style.color="green";
 status.textContent="Announcement published successfully!";
 document.getElementById("announcementForm").reset();
-
+await loadAnnouncements();
 }catch(error){
 status.style.color="#dc2626";
 status.textContent=error.message||"Publishing failed.";
@@ -352,14 +421,11 @@ publishButton.textContent="Publish Announcement";
 
 document.getElementById("eventForm").addEventListener("submit",async function(event){
 event.preventDefault();
-
 const button=document.getElementById("publishEventButton");
 const status=document.getElementById("eventStatus");
-
 button.disabled=true;
 button.textContent="Publishing...";
 status.textContent="";
-
 try{
 const response=await fetch("/api/events",{
 method:"POST",
@@ -372,17 +438,12 @@ event_date:document.getElementById("eventDate").value,
 location:document.getElementById("eventLocation").value.trim()
 })
 });
-
 const data=await response.json();
-
-if(!response.ok){
-throw new Error(data.error||"Event could not be published.");
-}
-
+if(!response.ok)throw new Error(data.error||"Event could not be published.");
 status.style.color="green";
 status.textContent="Event published successfully!";
 document.getElementById("eventForm").reset();
-
+await loadEvents();
 }catch(error){
 status.style.color="#dc2626";
 status.textContent=error.message||"Publishing failed.";
@@ -396,7 +457,6 @@ document.getElementById("logoutButton").addEventListener("click",async function(
 try{
 await fetch(API+"/logout",{method:"POST",credentials:"same-origin"});
 }catch(error){}
-
 document.getElementById("password").value="";
 message.textContent="";
 showLogin();
