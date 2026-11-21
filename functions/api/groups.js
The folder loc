@@ -1,0 +1,264 @@
+
+export async function onRequest({ request, env }) {
+  const respond = (data, status = 200) =>
+    Response.json(data, {
+      status,
+      headers: { "Cache-Control": "no-store" }
+    });
+
+  try {
+    if (!env.DB) {
+      return respond({ error: "Database connection missing." }, 500);
+    }
+
+    if (!["GET", "POST"].includes(request.method)) {
+      return respond({ error: "Method not allowed." }, 405);
+    }
+
+    // Verify logged-in student
+    const cookie = request.headers.get("Cookie") || "";
+    const match = cookie.match(/(?:^|;\s*)student_session=([^;]+)/);
+
+    if (!match) {
+      return respond({ error: "Please log in first." }, 401);
+    }
+
+    const token = decodeURIComponent(match[1]);
+    const hash = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(token)
+    );
+
+    const tokenHash = Array.from(new Uint8Array(hash))
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    const student = await env.DB.prepare(`
+      SELECT students.id, students.full_name
+      FROM student_sessions
+      JOIN students ON students.id = student_sessions.student_id
+      WHERE student_sessions.token_hash = ?
+      AND student_sessions.expires_at > datetime('now')
+    `).bind(tokenHash).first();
+
+    if (!student) {
+      return respond({ error: "Session expired. Log in again." }, 401);
+    }
+
+    const myId = Number(student.id);
+
+    // LIST GROUPS OR OPEN A GROUP
+    if (request.method === "GET") {
+      const url = new URL(request.url);
+      const groupId = Number(url.searchParams.get("group_id"));
+
+      if (groupId) {
+        const group = await env.DB.prepare(`
+          SELECT g.id, g.name, g.created_by, g.created_at,
+                 s.full_name AS creator_name
+          FROM chat_groups g
+          JOIN students s ON s.id = g.created_by
+          JOIN chat_group_members mine ON mine.group_id = g.id
+          WHERE g.id = ? AND mine.student_id = ?
+        `).bind(groupId, myId).first();
+
+        if (!group) {
+          return respond({ error: "Group not found or you are not a member." }, 404);
+        }
+
+        const members = await env.DB.prepare(`
+          SELECT m.student_id, m.role, s.full_name
+          FROM chat_group_members m
+          JOIN students s ON s.id = m.student_id
+          WHERE m.group_id = ?
+          ORDER BY m.role DESC, s.full_name ASC
+        `).bind(groupId).all();
+
+        const messages = await env.DB.prepare(`
+          SELECT m.id, m.sender_id, m.message, m.created_at,
+                 s.full_name AS sender_name
+          FROM chat_group_messages m
+          JOIN students s ON s.id = m.sender_id
+          WHERE m.group_id = ?
+          ORDER BY m.id ASC
+          LIMIT 500
+        `).bind(groupId).all();
+
+        return respond({
+          success: true,
+          group,
+          members: members.results || [],
+          messages: messages.results || []
+        });
+      }
+
+      const groups = await env.DB.prepare(`
+        SELECT g.id, g.name, g.created_by, g.created_at,
+               s.full_name AS creator_name,
+               mine.role,
+               (SELECT COUNT(*) FROM chat_group_members m
+                WHERE m.group_id = g.id) AS member_count,
+               (SELECT message FROM chat_group_messages msg
+                WHERE msg.group_id = g.id
+                ORDER BY msg.id DESC LIMIT 1) AS last_message
+        FROM chat_groups g
+        JOIN students s ON s.id = g.created_by
+        JOIN chat_group_members mine ON mine.group_id = g.id
+        WHERE mine.student_id = ?
+        ORDER BY g.id DESC
+      `).bind(myId).all();
+
+      return respond({
+        success: true,
+        groups: groups.results || []
+      });
+    }
+
+    // GROUP ACTIONS
+    const data = await request.json();
+
+    // CREATE GROUP: creator automatically becomes admin
+    if (data.action === "create") {
+      const name = String(data.name || "").trim();
+
+      if (name.length < 2 || name.length > 60) {
+        return respond({
+          error: "Group name must be between 2 and 60 characters."
+        }, 400);
+      }
+
+      const result = await env.DB.prepare(`
+        INSERT INTO chat_groups (name, created_by)
+        VALUES (?, ?)
+      `).bind(name, myId).run();
+
+      const groupId = result.meta.last_row_id;
+
+      await env.DB.prepare(`
+        INSERT INTO chat_group_members (group_id, student_id, role)
+        VALUES (?, ?, 'admin')
+      `).bind(groupId, myId).run();
+
+      return respond({
+        success: true,
+        message: "Group created successfully.",
+        group_id: groupId
+      });
+    }
+
+    // ADMIN-ONLY ACTIONS
+    if (data.action === "add_member" ||
+        data.action === "remove_member") {
+
+      const groupId = Number(data.group_id);
+      const targetId = Number(data.student_id);
+
+      if (!Number.isInteger(groupId) || groupId < 1 ||
+          !Number.isInteger(targetId) || targetId < 1) {
+        return respond({ error: "Invalid group or student." }, 400);
+      }
+
+      const group = await env.DB.prepare(`
+        SELECT id, created_by
+        FROM chat_groups
+        WHERE id = ?
+      `).bind(groupId).first();
+
+      if (!group) {
+        return respond({ error: "Group not found." }, 404);
+      }
+
+      const admin = await env.DB.prepare(`
+        SELECT role
+        FROM chat_group_members
+        WHERE group_id = ? AND student_id = ?
+      `).bind(groupId, myId).first();
+
+      if (!admin || admin.role !== "admin" ||
+          Number(group.created_by) !== myId) {
+        return respond({
+          error: "Only the group creator can manage members."
+        }, 403);
+      }
+
+      if (data.action === "add_member") {
+        const target = await env.DB.prepare(
+          "SELECT id FROM students WHERE id = ?"
+        ).bind(targetId).first();
+
+        if (!target) {
+          return respond({ error: "Student not found." }, 404);
+        }
+
+        const added = await env.DB.prepare(`
+          INSERT OR IGNORE INTO chat_group_members
+          (group_id, student_id, role)
+          VALUES (?, ?, 'member')
+        `).bind(groupId, targetId).run();
+
+        if (!added.meta.changes) {
+          return respond({ error: "This student is already in the group." }, 409);
+        }
+
+        return respond({
+          success: true,
+          message: "Student added to group."
+        });
+      }
+
+      if (targetId === myId ||
+          targetId === Number(group.created_by)) {
+        return respond({
+          error: "The group creator cannot be removed."
+        }, 400);
+      }
+
+      await env.DB.prepare(`
+        DELETE FROM chat_group_members
+        WHERE group_id = ? AND student_id = ?
+      `).bind(groupId, targetId).run();
+
+      return respond({
+        success: true,
+        message: "Student removed from group."
+      });
+    }
+
+    // SEND GROUP MESSAGE
+    if (data.action === "send_message") {
+      const groupId = Number(data.group_id);
+      const message = String(data.message || "").trim();
+
+      if (!Number.isInteger(groupId) || groupId < 1 ||
+          !message || message.length > 3000) {
+        return respond({ error: "Enter a valid message." }, 400);
+      }
+
+      const member = await env.DB.prepare(`
+        SELECT id FROM chat_group_members
+        WHERE group_id = ? AND student_id = ?
+      `).bind(groupId, myId).first();
+
+      if (!member) {
+        return respond({ error: "You are not a member of this group." }, 403);
+      }
+
+      await env.DB.prepare(`
+        INSERT INTO chat_group_messages (group_id, sender_id, message)
+        VALUES (?, ?, ?)
+      `).bind(groupId, myId, message).run();
+
+      return respond({
+        success: true,
+        message: "Group message sent."
+      });
+    }
+
+    return respond({ error: "Invalid group action." }, 400);
+
+  } catch (error) {
+    return respond({
+      error: "Group chat error: " + error.message
+    }, 500);
+  }
+}
