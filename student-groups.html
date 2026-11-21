@@ -1,0 +1,385 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Connect | Group Chats</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#1e293b}
+header{background:#123b67;color:white;padding:16px}
+header h2{margin:0 0 6px}
+header a{color:white;text-decoration:none}
+.container{max-width:1000px;margin:20px auto;padding:12px}
+.card{background:white;padding:18px;border-radius:12px;margin-bottom:16px;box-shadow:0 2px 8px #0001}
+input,button{font:inherit;padding:12px;border-radius:7px}
+input{border:1px solid #cbd5e1;width:100%;margin:7px 0}
+button{border:0;background:#123b67;color:white;cursor:pointer}
+button:disabled{opacity:.5}
+.create{display:flex;gap:8px}
+.create input{flex:1}
+.layout{display:grid;grid-template-columns:280px 1fr;gap:15px}
+.group{padding:12px;border-bottom:1px solid #e2e8f0;cursor:pointer}
+.group:hover,.group.active{background:#eaf2fb}
+.muted{color:#64748b;font-size:13px}
+#chatArea{min-height:350px}
+#messages{height:300px;overflow-y:auto;background:#f8fafc;padding:12px;border-radius:8px;margin:12px 0}
+.msg{background:#e2e8f0;padding:9px 12px;border-radius:9px;margin:8px 0;max-width:85%;overflow-wrap:anywhere}
+.msg.mine{background:#dbeafe;margin-left:auto}
+.msg small{display:block;color:#64748b;margin-top:5px}
+.send{display:flex;gap:8px}
+.send input{flex:1}
+.member{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #e2e8f0}
+.member button{padding:6px 9px;background:#b91c1c;font-size:12px}
+.admin{background:#eff6ff;padding:12px;border-radius:8px;margin-top:12px}
+.hidden{display:none}
+#status{margin:10px 0;color:#b91c1c}
+@media(max-width:700px){
+.layout{grid-template-columns:1fr}
+#groupList{max-height:220px;overflow-y:auto}
+#messages{height:280px}
+.create{display:block}
+}
+</style>
+</head>
+<body>
+
+<header>
+<h2>Campus Connect</h2>
+<div>Student Group Chats</div>
+<p><a href="student-dashboard.html">← Back to Dashboard</a></p>
+</header>
+
+<div class="container">
+<div class="card">
+<h3>Create a Group Chat</h3>
+<p class="muted">Create a group with any name. You automatically become its admin.</p>
+<div class="create">
+<input id="newGroupName" maxlength="60" placeholder="Enter group name">
+<button id="createBtn" onclick="createGroup()">Create Group</button>
+</div>
+</div>
+
+<div id="status"></div>
+
+<div class="layout">
+<div class="card">
+<h3>My Groups</h3>
+<div id="groupList">Loading groups...</div>
+</div>
+
+<div class="card" id="chatArea">
+<h3 id="groupTitle">Select a group</h3>
+<div id="groupInfo" class="muted"></div>
+<div id="messages"></div>
+
+<form class="send" id="sendForm">
+<input id="messageInput" placeholder="Write a group message..." autocomplete="off" required>
+<button type="submit">Send</button>
+</form>
+
+<div class="admin hidden" id="adminArea">
+<h3>Manage Group Members</h3>
+<p class="muted">Only the group creator can add or remove members.</p>
+<select id="studentSelect" style="width:100%;padding:11px;margin:7px 0">
+<option value="">Choose a student to add</option>
+</select>
+<button onclick="addMember()">Add Student</button>
+<h4>Group Members</h4>
+<div id="memberList"></div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+let currentStudent = null;
+let selectedGroup = null;
+let groups = [];
+let directory = [];
+let messageTimer = null;
+
+const $ = id => document.getElementById(id);
+
+function showStatus(message, error=true){
+  $("status").textContent = message;
+  $("status").style.color = error ? "#b91c1c" : "#15803d";
+}
+
+async function api(url, options={}){
+  const response = await fetch(url,{
+    credentials:"same-origin",
+    ...options,
+    headers:{
+      "Content-Type":"application/json",
+      ...(options.headers || {})
+    }
+  });
+  const data = await response.json();
+  if(!response.ok || data.success === false){
+    throw new Error(data.error || data.message || "Request failed");
+  }
+  return data;
+}
+
+async function start(){
+  try{
+    const auth = await api("/api/student");
+    if(!auth.authenticated || !auth.student){
+      location.href = "student.html";
+      return;
+    }
+    currentStudent = auth.student;
+
+    const result = await api("/api/directory");
+    directory = result.students || [];
+
+    await loadGroups();
+  }catch(error){
+    showStatus(error.message || "Please log in again.");
+  }
+}
+
+async function loadGroups(){
+  try{
+    const result = await api("/api/groups");
+    groups = result.groups || [];
+    renderGroups();
+  }catch(error){
+    showStatus(error.message);
+  }
+}
+
+function renderGroups(){
+  const list = $("groupList");
+  list.replaceChildren();
+
+  if(!groups.length){
+    list.textContent = "You have not joined any groups yet. Create one above.";
+    return;
+  }
+
+  groups.forEach(group=>{
+    const item = document.createElement("div");
+    item.className = "group" + (selectedGroup && Number(selectedGroup.id) === Number(group.id) ? " active" : "");
+
+    const name = document.createElement("strong");
+    name.textContent = group.name;
+
+    const info = document.createElement("div");
+    info.className = "muted";
+    info.textContent = (group.member_count || 0) + " members";
+
+    item.append(name,info);
+    item.onclick = ()=>openGroup(group.id);
+    list.appendChild(item);
+  });
+}
+
+async function createGroup(){
+  const name = $("newGroupName").value.trim();
+  if(name.length < 2){
+    showStatus("Group name must contain at least 2 characters.");
+    return;
+  }
+
+  $("createBtn").disabled = true;
+  try{
+    const result = await api("/api/groups",{
+      method:"POST",
+      body:JSON.stringify({action:"create",name})
+    });
+    $("newGroupName").value = "";
+    showStatus("Group created successfully.",false);
+    await loadGroups();
+
+    const newId = result.group_id || result.group?.id;
+    if(newId) await openGroup(newId);
+  }catch(error){
+    showStatus(error.message);
+  }finally{
+    $("createBtn").disabled = false;
+  }
+}
+
+async function openGroup(id){
+  try{
+    const result = await api("/api/groups?group_id="+encodeURIComponent(id));
+    selectedGroup = result.group;
+    if(!selectedGroup) throw new Error("Group not found.");
+
+    $("groupTitle").textContent = selectedGroup.name;
+    $("groupInfo").textContent = "Group chat";
+    renderGroups();
+    renderMessages(result.messages || []);
+    renderMembers(result.members || []);
+
+    const isAdmin = Number(selectedGroup.created_by) === Number(currentStudent.id);
+    $("adminArea").classList.toggle("hidden",!isAdmin);
+
+    if(isAdmin) renderStudentOptions(result.members || []);
+    if(messageTimer) clearInterval(messageTimer);
+    messageTimer = setInterval(refreshSelectedGroup,5000);
+  }catch(error){
+    showStatus(error.message);
+  }
+}
+
+function renderMessages(messages){
+  const area = $("messages");
+  area.replaceChildren();
+
+  if(!messages.length){
+    area.textContent = "No messages yet. Start the conversation!";
+    return;
+  }
+
+  messages.forEach(message=>{
+    const bubble = document.createElement("div");
+    bubble.className = "msg" + (Number(message.sender_id) === Number(currentStudent.id) ? " mine" : "");
+
+    const sender = document.createElement("strong");
+    sender.textContent = message.sender_name || (Number(message.sender_id) === Number(currentStudent.id) ? "You" : "Student");
+
+    const content = document.createElement("div");
+    content.textContent = message.message;
+
+    const time = document.createElement("small");
+    time.textContent = message.created_at || "";
+
+    bubble.append(sender,content,time);
+    area.appendChild(bubble);
+  });
+
+  area.scrollTop = area.scrollHeight;
+}
+
+function renderMembers(members){
+  const area = $("memberList");
+  area.replaceChildren();
+
+  members.forEach(member=>{
+    const row = document.createElement("div");
+    row.className = "member";
+
+    const name = document.createElement("span");
+    name.textContent = member.full_name + (member.role === "admin" ? " (Admin)" : "");
+    row.appendChild(name);
+
+    const isAdmin = Number(selectedGroup.created_by) === Number(currentStudent.id);
+    const canRemove = isAdmin && Number(member.student_id) !== Number(selectedGroup.created_by);
+
+    if(canRemove){
+      const button = document.createElement("button");
+      button.textContent = "Remove";
+      button.onclick = ()=>removeMember(member.student_id);
+      row.appendChild(button);
+    }
+
+    area.appendChild(row);
+  });
+}
+
+function renderStudentOptions(members){
+  const select = $("studentSelect");
+  select.replaceChildren();
+
+  const first = document.createElement("option");
+  first.value = "";
+  first.textContent = "Choose a student to add";
+  select.appendChild(first);
+
+  const memberIds = members.map(m=>Number(m.student_id));
+
+  directory.forEach(student=>{
+    if(memberIds.includes(Number(student.id))) return;
+    const option = document.createElement("option");
+    option.value = student.id;
+    option.textContent = student.full_name;
+    select.appendChild(option);
+  });
+}
+
+async function addMember(){
+  const studentId = $("studentSelect").value;
+  if(!studentId){
+    showStatus("Please choose a student.");
+    return;
+  }
+
+  try{
+    await api("/api/groups",{
+      method:"POST",
+      body:JSON.stringify({
+        action:"add_member",
+        group_id:selectedGroup.id,
+        student_id:Number(studentId)
+      })
+    });
+    showStatus("Student added to the group.",false);
+    await openGroup(selectedGroup.id);
+    await loadGroups();
+  }catch(error){
+    showStatus(error.message);
+  }
+}
+
+async function removeMember(studentId){
+  if(!confirm("Remove this student from the group?")) return;
+
+  try{
+    await api("/api/groups",{
+      method:"POST",
+      body:JSON.stringify({
+        action:"remove_member",
+        group_id:selectedGroup.id,
+        student_id:Number(studentId)
+      })
+    });
+    showStatus("Student removed.",false);
+    await openGroup(selectedGroup.id);
+    await loadGroups();
+  }catch(error){
+    showStatus(error.message);
+  }
+}
+
+$("sendForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  if(!selectedGroup) return;
+
+  const message = $("messageInput").value.trim();
+  if(!message) return;
+
+  try{
+    await api("/api/groups",{
+      method:"POST",
+      body:JSON.stringify({
+        action:"send_message",
+        group_id:selectedGroup.id,
+        message
+      })
+    });
+    $("messageInput").value = "";
+    await refreshSelectedGroup();
+  }catch(error){
+    showStatus(error.message);
+  }
+});
+
+async function refreshSelectedGroup(){
+  if(!selectedGroup) return;
+  try{
+    const result = await api("/api/groups?group_id="+encodeURIComponent(selectedGroup.id));
+    renderMessages(result.messages || []);
+    renderMembers(result.members || []);
+  }catch(error){
+    showStatus(error.message);
+  }
+}
+
+start();
+</script>
+</body>
+</html>
