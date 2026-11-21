@@ -1,67 +1,80 @@
 
-export async function onRequestPost({ request, env }) {
-  try {
-    // Check that the administrator is logged in
-    const authResponse = await fetch(
-      "https://campus-connect-admin-login.campusconnect668.workers.dev/session",
-      {
-        headers: {
-          Cookie: request.headers.get("Cookie") || "",
-          Origin: "https://campus-connect-website.pages.dev"
-        }
+async function checkAdmin(request) {
+  const response = await fetch(
+    "https://campus-connect-admin-login.campusconnect668.workers.dev/session",
+    {
+      headers: {
+        Cookie: request.headers.get("Cookie") || "",
+        Origin: "https://campus-connect-website.pages.dev"
       }
-    );
+    }
+  );
 
-    const auth = await authResponse.json();
+  if (!response.ok) return false;
 
-    if (!authResponse.ok || !auth.authenticated) {
-      return Response.json(
-        { error: "Please log in as administrator." },
-        { status: 401 }
-      );
+  const data = await response.json();
+  return data.authenticated === true;
+}
+
+export async function onRequest({ request, env }) {
+  const respond = (data, status = 200) =>
+    Response.json(data, { status });
+
+  try {
+    if (request.method === "GET") {
+      const result = await env.DB.prepare(
+        "SELECT * FROM announcements ORDER BY created_at DESC"
+      ).all();
+
+      return respond({ announcements: result.results || [] });
     }
 
-    // Read announcement details
-    const body = await request.json();
-
-    const title = String(body.title || "").trim();
-    const content = String(body.content || "").trim();
-    const category = String(body.category || "General").trim();
-
-    if (!title || !content) {
-      return Response.json(
-        { error: "Title and content are required." },
-        { status: 400 }
-      );
+    if (request.method === "POST" || request.method === "DELETE") {
+      if (!(await checkAdmin(request))) {
+        return respond({ error: "Please log in as administrator." }, 401);
+      }
     }
 
-    if (
-      title.length > 200 ||
-      content.length > 5000 ||
-      category.length > 100
-    ) {
-      return Response.json(
-        { error: "One or more fields are too long." },
-        { status: 400 }
-      );
+    if (request.method === "POST") {
+      const body = await request.json();
+      const title = String(body.title || "").trim();
+      const content = String(body.content || "").trim();
+      const category = String(body.category || "General").trim();
+
+      if (!title || !content) {
+        return respond({ error: "Title and content are required." }, 400);
+      }
+
+      await env.DB.prepare(
+        `INSERT INTO announcements
+         (title, content, category, created_at)
+         VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
+      ).bind(title, content, category).run();
+
+      return respond({ message: "Announcement published successfully." }, 201);
     }
 
-    // Save announcement to D1
-    await env.DB.prepare(
-      `INSERT INTO announcements
-       (title, content, category, created_at)
-       VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
-    ).bind(title, content, category).run();
+    if (request.method === "DELETE") {
+      const body = await request.json();
+      const id = Number(body.id);
 
-    return Response.json(
-      { message: "Announcement published successfully." },
-      { status: 201 }
-    );
+      if (!Number.isSafeInteger(id) || id < 1) {
+        return respond({ error: "Invalid announcement ID." }, 400);
+      }
 
+      const result = await env.DB.prepare(
+        "DELETE FROM announcements WHERE id = ?"
+      ).bind(id).run();
+
+      if (!result.meta || result.meta.changes === 0) {
+        return respond({ error: "Announcement not found." }, 404);
+      }
+
+      return respond({ message: "Announcement deleted successfully." });
+    }
+
+    return respond({ error: "Method not allowed." }, 405);
   } catch (error) {
-    return Response.json(
-      { error: "Unable to publish announcement." },
-      { status: 500 }
-    );
+    return respond({ error: "Unable to process announcement request." }, 500);
   }
 }
