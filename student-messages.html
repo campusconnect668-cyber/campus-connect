@@ -5,28 +5,55 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campus Connect | Private Messages</title>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#1e293b}
-header{background:#123b67;color:white;padding:20px;text-align:center}
+header{background:#123b67;color:white;padding:16px;text-align:center}
 header a{color:white}
-main{max-width:850px;margin:25px auto;padding:15px}
-.card{background:white;padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 3px 12px #0001}
-h2{color:#123b67;margin-top:0}
-select,input,textarea{width:100%;padding:13px;margin:8px 0 15px;border:1px solid #cbd5e1;border-radius:7px;font-size:16px}
-textarea{min-height:90px;resize:vertical}
-button{background:#123b67;color:white;border:0;padding:12px 18px;border-radius:7px;cursor:pointer}
-button:disabled{opacity:.6}
-#messages{max-height:450px;overflow-y:auto}
-.message{padding:12px;margin:10px 0;border-radius:10px;background:#e2e8f0;overflow-wrap:anywhere}
-.message.mine{background:#dbeafe;margin-left:10%}
-.message strong{display:block;color:#123b67}
-.message small{color:#64748b}
-.status{padding:10px;color:#475569}
+main{max-width:1100px;margin:20px auto;padding:12px}
+.chat-layout{display:grid;grid-template-columns:320px 1fr;gap:15px;min-height:600px}
+.card{background:white;border-radius:12px;box-shadow:0 3px 12px #0001;overflow:hidden}
+.card-title{padding:18px;background:#fff;border-bottom:1px solid #e2e8f0}
+.card-title h2{margin:0;color:#123b67;font-size:20px}
+#newCount{display:inline-block;background:#dc2626;color:white;padding:4px 9px;border-radius:20px;font-size:12px;margin-top:8px}
+#contacts{max-height:550px;overflow-y:auto}
+.contact{width:100%;border:0;border-bottom:1px solid #e2e8f0;background:white;color:#1e293b;text-align:left;padding:15px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.contact:hover,.contact.active{background:#eaf2fb}
+.contact-info{flex:1;min-width:0}
+.contact-name{font-weight:bold;color:#123b67;display:block}
+.contact-preview{font-size:12px;color:#64748b;display:block;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.unread{background:#dc2626;color:white;border-radius:20px;padding:4px 8px;font-size:12px}
+#chatPanel{display:flex;flex-direction:column;min-height:600px}
+#chatHeader{padding:17px;border-bottom:1px solid #e2e8f0;font-weight:bold;color:#123b67}
+#backButton{display:none;margin-right:10px;background:#64748b;padding:7px 11px}
+#messages{flex:1;min-height:350px;max-height:480px;overflow-y:auto;padding:15px}
+.message{max-width:80%;padding:12px;margin:10px 0;border-radius:12px;background:#e2e8f0;overflow-wrap:anywhere}
+.message.mine{background:#dbeafe;margin-left:auto}
+.message strong{display:block;color:#123b67;font-size:13px}
+.message p{margin:7px 0;white-space:pre-wrap}
+.message small{color:#64748b;font-size:11px}
+#emptyChat{text-align:center;color:#64748b;margin:auto;padding:30px}
+#composer{padding:15px;border-top:1px solid #e2e8f0}
+textarea{width:100%;min-height:75px;padding:12px;border:1px solid #cbd5e1;border-radius:8px;font:16px Arial;resize:vertical}
+button{background:#123b67;color:white;border:0;padding:11px 17px;border-radius:7px;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+#sendButton{margin-top:8px}
+.status{padding:10px;color:#64748b;font-size:13px}
+#sendStatus{min-height:20px}
+@media(max-width:700px){
+ main{padding:8px;margin:10px auto}
+ .chat-layout{display:block;min-height:550px}
+ #chatPanel{display:none;min-height:550px}
+ .chat-layout.chat-open #contactsPanel{display:none}
+ .chat-layout.chat-open #chatPanel{display:flex}
+ #backButton{display:inline-block}
+ #messages{max-height:none}
+}
 </style>
 </head>
-<body>
 
+<body>
 <header>
 <h1>Campus Connect</h1>
 <p>Private Student Messages</p>
@@ -34,46 +61,71 @@ button:disabled{opacity:.6}
 </header>
 
 <main>
-<section class="card">
-<h2>Send a Private Message</h2>
+<div class="chat-layout" id="chatLayout">
 
-<form id="messageForm">
-<label for="receiver">Choose a student</label>
-<select id="receiver" required>
-<option value="">Loading students...</option>
-</select>
+<section class="card" id="contactsPanel">
+<div class="card-title">
+<h2>Your Conversations</h2>
+<div id="newCount">0 New Messages</div>
+</div>
+<div id="contactStatus" class="status">Loading students...</div>
+<div id="contacts"></div>
+</section>
 
-<label for="messageText">Your Message</label>
-<textarea id="messageText" maxlength="3000" required placeholder="Write your private message..."></textarea>
+<section class="card" id="chatPanel">
+<div id="chatHeader">
+<button id="backButton" type="button">Back</button>
+<span id="chatName">Select a student to chat</span>
+</div>
 
-<button id="sendButton" type="submit">Send Message</button>
+<div id="messages">
+<div id="emptyChat">Choose a student's name to open a private conversation.</div>
+</div>
+
+<form id="composer">
+<textarea id="messageText" maxlength="3000" placeholder="Write your private message..." disabled required></textarea>
+<button id="sendButton" type="submit" disabled>Send Message</button>
+<div id="sendStatus" class="status"></div>
 </form>
-
-<div id="sendStatus" class="status" role="status"></div>
 </section>
 
-<section class="card">
-<h2>Your Messages</h2>
-<div id="messageStatus" class="status">Loading messages...</div>
-<div id="messages"></div>
-</section>
+</div>
 </main>
 
 <script>
 let currentStudentId = null;
+let selectedStudentId = null;
+let students = [];
+let allMessages = [];
+let loading = false;
 
-const receiver = document.getElementById("receiver");
+const contactsBox = document.getElementById("contacts");
 const messagesBox = document.getElementById("messages");
+const chatLayout = document.getElementById("chatLayout");
 
-async function verifyStudent() {
-  const response = await fetch("/api/student", {
+async function api(url, options = {}) {
+  const response = await fetch(url, {
     credentials: "same-origin",
-    cache: "no-store"
+    cache: "no-store",
+    ...options,
+    headers: {
+      ...(options.headers || {})
+    }
   });
 
   const data = await response.json();
 
-  if (!response.ok || !data.authenticated) {
+  if (!response.ok) {
+    throw new Error(data.error || "Something went wrong.");
+  }
+
+  return data;
+}
+
+async function verifyStudent() {
+  const data = await api("/api/student");
+
+  if (!data.authenticated) {
     window.location.href = "student.html";
     return false;
   }
@@ -83,63 +135,140 @@ async function verifyStudent() {
 }
 
 async function loadStudents() {
-  const response = await fetch("/api/directory", {
-    credentials: "same-origin",
-    cache: "no-store"
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Unable to load students.");
-  }
-
-  receiver.replaceChildren();
-
-  const firstOption = document.createElement("option");
-  firstOption.value = "";
-  firstOption.textContent = "Select a student";
-  receiver.appendChild(firstOption);
-
-  (data.students || []).forEach(student => {
-    if (Number(student.id) === currentStudentId) return;
-
-    const option = document.createElement("option");
-    option.value = student.id;
-    option.textContent = student.full_name;
-    receiver.appendChild(option);
-  });
+  const data = await api("/api/directory");
+  students = (data.students || []).filter(
+    s => Number(s.id) !== currentStudentId
+  );
 }
 
-function displayMessages(items) {
-  messagesBox.replaceChildren();
+async function getMessages() {
+  const data = await api("/api/messages");
+  allMessages = data.messages || [];
+}
 
-  if (!items.length) {
-    document.getElementById("messageStatus").textContent =
-      "No private messages yet.";
+function getUnreadCount(studentId) {
+  return allMessages.filter(m =>
+    Number(m.sender_id) === Number(studentId) &&
+    Number(m.receiver_id) === currentStudentId &&
+    !m.read_at
+  ).length;
+}
+
+function getConversation(studentId) {
+  return allMessages.filter(m =>
+    (Number(m.sender_id) === currentStudentId &&
+     Number(m.receiver_id) === Number(studentId)) ||
+    (Number(m.sender_id) === Number(studentId) &&
+     Number(m.receiver_id) === currentStudentId)
+  );
+}
+
+function renderContacts() {
+  contactsBox.replaceChildren();
+
+  let totalUnread = 0;
+
+  students.forEach(student => {
+    totalUnread += getUnreadCount(student.id);
+  });
+
+  document.getElementById("newCount").textContent =
+    totalUnread + (totalUnread === 1 ? " New Message" : " New Messages");
+
+  const sorted = [...students].sort((a, b) => {
+    const aMessages = getConversation(a.id);
+    const bMessages = getConversation(b.id);
+
+    const aLast = aMessages.length
+      ? aMessages[aMessages.length - 1].created_at || ""
+      : "";
+
+    const bLast = bMessages.length
+      ? bMessages[bMessages.length - 1].created_at || ""
+      : "";
+
+    return bLast.localeCompare(aLast);
+  });
+
+  if (!sorted.length) {
+    document.getElementById("contactStatus").textContent =
+      "No other students found.";
     return;
   }
 
-  document.getElementById("messageStatus").textContent =
-    items.length + " message(s)";
+  document.getElementById("contactStatus").textContent =
+    "Select a student to open their chat.";
 
-  items.forEach(item => {
-    const box = document.createElement("div");
-    box.className = "message";
+  sorted.forEach(student => {
+    const conversation = getConversation(student.id);
+    const unread = getUnreadCount(student.id);
+    const last = conversation[conversation.length - 1];
 
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "contact";
+
+    if (Number(selectedStudentId) === Number(student.id)) {
+      button.classList.add("active");
+    }
+
+    const info = document.createElement("span");
+    info.className = "contact-info";
+
+    const name = document.createElement("span");
+    name.className = "contact-name";
+    name.textContent = student.full_name;
+
+    const preview = document.createElement("span");
+    preview.className = "contact-preview";
+
+    preview.textContent = last
+      ? (Number(last.sender_id) === currentStudentId ? "You: " : "") +
+        last.message
+      : "Start a conversation";
+
+    info.append(name, preview);
+    button.appendChild(info);
+
+    if (unread > 0) {
+      const badge = document.createElement("span");
+      badge.className = "unread";
+      badge.textContent = unread;
+      button.appendChild(badge);
+    }
+
+    button.addEventListener("click", () => openConversation(student.id));
+    contactsBox.appendChild(button);
+  });
+}
+
+function renderConversation() {
+  messagesBox.replaceChildren();
+
+  const conversation = getConversation(selectedStudentId);
+
+  if (!conversation.length) {
+    const empty = document.createElement("div");
+    empty.id = "emptyChat";
+    empty.textContent = "No messages yet. Send the first message!";
+    messagesBox.appendChild(empty);
+    return;
+  }
+
+  conversation.forEach(item => {
     const mine = Number(item.sender_id) === currentStudentId;
-    if (mine) box.classList.add("mine");
+
+    const box = document.createElement("div");
+    box.className = "message" + (mine ? " mine" : "");
 
     const name = document.createElement("strong");
-    name.textContent = mine
-      ? "You → " + item.receiver_name
-      : item.sender_name;
+    name.textContent = mine ? "You" : item.sender_name;
 
     const text = document.createElement("p");
     text.textContent = item.message;
 
     const date = document.createElement("small");
-    date.textContent = item.created_at;
+    date.textContent = item.created_at || "";
 
     box.append(name, text, date);
     messagesBox.appendChild(box);
@@ -148,51 +277,94 @@ function displayMessages(items) {
   messagesBox.scrollTop = messagesBox.scrollHeight;
 }
 
-async function loadMessages() {
-  const response = await fetch("/api/messages", {
-    credentials: "same-origin",
-    cache: "no-store"
+async function markConversationRead(studentId) {
+  await api("/api/messages", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      action: "mark_read",
+      sender_id: studentId
+    })
   });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Unable to load messages.");
-  }
-
-  displayMessages(data.messages || []);
 }
 
-document.getElementById("messageForm").addEventListener("submit", async event => {
+async function openConversation(studentId) {
+  selectedStudentId = Number(studentId);
+
+  const student = students.find(
+    s => Number(s.id) === selectedStudentId
+  );
+
+  document.getElementById("chatName").textContent =
+    student ? student.full_name : "Private Chat";
+
+  document.getElementById("messageText").disabled = false;
+  document.getElementById("sendButton").disabled = false;
+
+  chatLayout.classList.add("chat-open");
+
+  try {
+    await markConversationRead(selectedStudentId);
+    await getMessages();
+    renderContacts();
+    renderConversation();
+  } catch (error) {
+    document.getElementById("sendStatus").textContent = error.message;
+  }
+}
+
+async function refreshMessages() {
+  if (loading) return;
+  loading = true;
+
+  try {
+    await getMessages();
+
+    if (selectedStudentId !== null) {
+      await markConversationRead(selectedStudentId);
+      await getMessages();
+      renderConversation();
+    }
+
+    renderContacts();
+
+  } catch (error) {
+    document.getElementById("contactStatus").textContent =
+      error.message;
+  } finally {
+    loading = false;
+  }
+}
+
+document.getElementById("composer").addEventListener("submit", async event => {
   event.preventDefault();
 
+  if (!selectedStudentId) return;
+
+  const textBox = document.getElementById("messageText");
   const button = document.getElementById("sendButton");
   const status = document.getElementById("sendStatus");
+
+  const message = textBox.value.trim();
+  if (!message) return;
 
   button.disabled = true;
   status.textContent = "Sending message...";
 
   try {
-    const response = await fetch("/api/messages", {
+    await api("/api/messages", {
       method: "POST",
-      credentials: "same-origin",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
-        receiver_id: receiver.value,
-        message: document.getElementById("messageText").value
+        receiver_id: selectedStudentId,
+        message
       })
     });
 
-    const data = await response.json();
+    textBox.value = "";
+    status.textContent = "Message sent successfully.";
 
-    if (!response.ok) {
-      throw new Error(data.error || "Message could not be sent.");
-    }
-
-    document.getElementById("messageText").value = "";
-    status.textContent = "Message sent successfully!";
-
-    await loadMessages();
+    await refreshMessages();
 
   } catch (error) {
     status.textContent = error.message;
@@ -201,16 +373,24 @@ document.getElementById("messageForm").addEventListener("submit", async event =>
   }
 });
 
+document.getElementById("backButton").addEventListener("click", () => {
+  chatLayout.classList.remove("chat-open");
+});
+
 async function startMessaging() {
   try {
     const authenticated = await verifyStudent();
     if (!authenticated) return;
 
     await loadStudents();
-    await loadMessages();
+    await refreshMessages();
+
+    // Check for new messages every five seconds
+    setInterval(refreshMessages, 5000);
 
   } catch (error) {
-    document.getElementById("messageStatus").textContent = error.message;
+    document.getElementById("contactStatus").textContent =
+      error.message;
   }
 }
 
