@@ -21,6 +21,11 @@ button{background:#b91c1c;color:white;border:0;padding:12px 18px;border-radius:7
 a{color:#123b67}
 .quick-link{display:block;padding:14px;margin:10px 0;background:#f1f5f9;border-radius:8px;text-decoration:none;font-weight:bold}
 .quick-link:hover{background:#e2e8f0}
+#messageNotice{display:none;border:2px solid #dc2626}
+.notice-item{padding:12px 0;border-bottom:1px solid #e2e8f0}
+.notice-item a{font-weight:bold;color:#b91c1c}
+.notice-count{display:inline-block;background:#dc2626;color:white;padding:5px 10px;border-radius:20px;font-size:13px}
+#messageLinkBadge{display:inline-block;background:#dc2626;color:white;padding:4px 9px;border-radius:20px;margin-left:8px;font-size:12px}
 </style>
 </head>
 <body>
@@ -41,6 +46,12 @@ a{color:#123b67}
 <p>Email: <span id="studentEmail"></span></p>
 </section>
 
+<section class="card" id="messageNotice">
+<h2>New Private Messages</h2>
+<p><span class="notice-count" id="messageCount">0</span></p>
+<div id="messageSenders"></div>
+</section>
+
 <section class="card">
 <h2>Latest Campus Announcements</h2>
 <div id="announcements">Loading...</div>
@@ -55,15 +66,15 @@ a{color:#123b67}
 <h2>Quick Links</h2>
 
 <a class="quick-link" href="student-profile.html">My Student Profile</a>
-
 <a class="quick-link" href="student-forum.html">Student Discussion Forum</a>
-
 <a class="quick-link" href="student-directory.html">Student Directory</a>
 
-<a class="quick-link" href="student-messages.html">Private Student Messages</a>
+<a class="quick-link" href="student-messages.html">
+Private Student Messages
+<span id="messageLinkBadge" hidden>0 New</span>
+</a>
 
 <a class="quick-link" href="index.html">Main Campus Connect Website</a>
-
 </section>
 </div>
 </main>
@@ -95,6 +106,8 @@ async function verifyStudent() {
     document.getElementById("dashboard").hidden = false;
 
     loadDashboard();
+    checkNewMessages();
+    setInterval(checkNewMessages, 5000);
 
   } catch (error) {
     document.getElementById("status").textContent =
@@ -110,6 +123,89 @@ async function logout() {
     });
   } finally {
     window.location.href = "student.html";
+  }
+}
+
+async function checkNewMessages() {
+  try {
+    const response = await fetch("/api/messages", {
+      credentials: "same-origin",
+      cache: "no-store"
+    });
+
+    if (!response.ok) return;
+
+    const data = await response.json();
+    const messages = data.messages || [];
+
+    const unread = messages.filter(message =>
+      !message.read_at
+    ).filter(message =>
+      Number(message.receiver_id) !== Number(message.sender_id)
+    );
+
+    // Keep only messages received by this logged-in student.
+    const studentResponse = await fetch("/api/student", {
+      credentials: "same-origin",
+      cache: "no-store"
+    });
+
+    const studentData = await studentResponse.json();
+    if (!studentResponse.ok || !studentData.authenticated) return;
+
+    const myId = Number(studentData.student.id);
+
+    const receivedUnread = unread.filter(message =>
+      Number(message.receiver_id) === myId
+    );
+
+    const senderGroups = {};
+
+    receivedUnread.forEach(message => {
+      const id = Number(message.sender_id);
+
+      if (!senderGroups[id]) {
+        senderGroups[id] = {
+          name: message.sender_name || "Student",
+          count: 0
+        };
+      }
+
+      senderGroups[id].count++;
+    });
+
+    const total = receivedUnread.length;
+    const notice = document.getElementById("messageNotice");
+    const badge = document.getElementById("messageLinkBadge");
+    const count = document.getElementById("messageCount");
+    const senders = document.getElementById("messageSenders");
+
+    count.textContent = total + (total === 1 ? " unread message" : " unread messages");
+
+    badge.textContent = total + " New";
+    badge.hidden = total === 0;
+
+    notice.style.display = total > 0 ? "block" : "none";
+    senders.replaceChildren();
+
+    Object.values(senderGroups).forEach(sender => {
+      const item = document.createElement("div");
+      item.className = "notice-item";
+
+      const text = document.createElement("p");
+      text.textContent = sender.name + " sent you " +
+        sender.count + (sender.count === 1 ? " new message." : " new messages.");
+
+      const link = document.createElement("a");
+      link.href = "student-messages.html";
+      link.textContent = "Open Private Messages";
+
+      item.append(text, link);
+      senders.appendChild(item);
+    });
+
+  } catch (error) {
+    console.log("Message notification check failed.");
   }
 }
 
