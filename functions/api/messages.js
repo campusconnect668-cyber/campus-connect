@@ -1,4 +1,3 @@
-
 export async function onRequest(context) {
   const { request, env } = context;
 
@@ -48,12 +47,42 @@ export async function onRequest(context) {
     `).bind(tokenHash).first();
 
     if (!student) {
-      return respond({ error: "Session expired. Please log in again." }, 401);
+      return respond({
+        error: "Session expired. Please log in again."
+      }, 401);
     }
 
-    // Send a private message
+    // Handle POST requests
     if (request.method === "POST") {
       const data = await request.json();
+
+      // Mark one conversation as read
+      if (data.action === "mark_read") {
+        const senderId = Number(data.sender_id);
+
+        if (!Number.isInteger(senderId) || senderId < 1) {
+          return respond({ error: "Invalid conversation." }, 400);
+        }
+
+        if (senderId === Number(student.id)) {
+          return respond({ error: "Invalid conversation." }, 400);
+        }
+
+        await env.DB.prepare(`
+          UPDATE student_messages
+          SET read_at = CURRENT_TIMESTAMP
+          WHERE receiver_id = ?
+          AND sender_id = ?
+          AND read_at IS NULL
+        `).bind(student.id, senderId).run();
+
+        return respond({
+          success: true,
+          message: "Conversation marked as read."
+        });
+      }
+
+      // Send a private message
       const receiverId = Number(data.receiver_id);
       const message = String(data.message || "").trim();
 
@@ -61,12 +90,14 @@ export async function onRequest(context) {
         return respond({ error: "Select a valid student." }, 400);
       }
 
-      if (receiverId === student.id) {
+      if (receiverId === Number(student.id)) {
         return respond({ error: "You cannot message yourself." }, 400);
       }
 
       if (!message || message.length > 3000) {
-        return respond({ error: "Message must be between 1 and 3000 characters." }, 400);
+        return respond({
+          error: "Message must be between 1 and 3000 characters."
+        }, 400);
       }
 
       const receiver = await env.DB.prepare(
@@ -89,7 +120,7 @@ export async function onRequest(context) {
       });
     }
 
-    // Get conversations for the logged-in student only
+    // Get messages without automatically marking them as read
     const results = await env.DB.prepare(`
       SELECT
         m.id,
@@ -108,19 +139,23 @@ export async function onRequest(context) {
       LIMIT 500
     `).bind(student.id, student.id).all();
 
-    // Mark messages received by this student as read
-    await env.DB.prepare(`
-      UPDATE student_messages
-      SET read_at = CURRENT_TIMESTAMP
-      WHERE receiver_id = ? AND read_at IS NULL
-    `).bind(student.id).run();
+    // Count unread messages
+    const unread = await env.DB.prepare(`
+      SELECT COUNT(*) AS unread_count
+      FROM student_messages
+      WHERE receiver_id = ?
+      AND read_at IS NULL
+    `).bind(student.id).first();
 
     return respond({
       success: true,
-      messages: results.results
+      messages: results.results || [],
+      unread_count: Number(unread?.unread_count || 0)
     });
 
   } catch (error) {
-    return respond({ error: "Messaging service error." }, 500);
+    return respond({
+      error: "Messaging service error."
+    }, 500);
   }
 }
