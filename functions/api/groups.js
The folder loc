@@ -1,4 +1,4 @@
-
+A
 export async function onRequest({ request, env }) {
   const respond = (data, status = 200) =>
     Response.json(data, {
